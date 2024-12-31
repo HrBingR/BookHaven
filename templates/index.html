@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BookLib</title>
+</head>
+<body>
+    <h1>BookLib</h1>
+    <ul>
+        {% for book in books %}
+        <li>
+            <a href="{{ url_for('download', relative_path=book.relative_path) }}">
+                {{ book.title }}
+            </a>
+            by {{ book.authors }} | join(', ') }}
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
