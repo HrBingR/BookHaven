@@ -1,0 +1,28 @@
+/* src/components/BookCard.css */
+.card-container {
+    height: 500px; /* Uniform height for all cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribute content evenly */
+    align-items: center; /* Center content */
+    text-align: center; /* Align text uniformly */
+    overflow: hidden; /* Prevent overflowing content */
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.book-cover {
+    max-height: 300px; /* Limit the height for book covers */
+    max-width: 100%; /* Ensure image fits within the card width */
+    object-fit: contain; /* Maintain aspect ratio, avoids distortion */
+}
+
+.card-footer {
+    margin-top: auto; /* Push the button to the bottom of the card body */
+    border-top: none !important;
+    background-color: #FFF !important;
+    padding: 0px !important;
+}
+.card-text {
+    margin-bottom: 2px !important;
+}

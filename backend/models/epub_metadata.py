@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -12,3 +12,5 @@ class EpubMetadata(Base):
     series = Column(String)
     seriesindex = Column(Float)
     relative_path = Column(String, unique=True)
+    cover_image_data = Column(LargeBinary)
+    cover_media_type = Column(String)
