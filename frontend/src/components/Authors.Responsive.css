@@ -1,0 +1,17 @@
+/* ==========================
+   Responsive Design
+========================== */
+@media (max-width: 768px) {
+  .grid-cell {
+    width: 100%; /* Full width on smaller screens */
+  }
+
+  button {
+    width: 100%; /* Full-width buttons */
+    margin-bottom: 0.5rem; /* Spacing for stacked buttons */
+  }
+
+  .page-heading {
+    font-size: 2rem; /* Adjust heading size for smaller screens */
+  }
+}

@@ -1,0 +1,63 @@
+/* ==========================
+Button and Letter Button Styles
+========================== */
+
+button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px; /* Rounded corners */
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+button:focus {
+  outline: none; /* Remove default focus styles */
+}
+
+/* Expand All Button */
+.btn-primary {
+  background-color: #4caf50; /* Green */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+/* Collapse All Button */
+.btn-secondary {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
+
+.letter-button {
+  width: 150px; /* Fixed width for buttons */
+  margin: auto; /* Center-align button */
+  padding: 10px;
+  font-weight: bold;
+  font-size: 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.letter-button.active {
+  background-color: #007bff; /* Blue */
+  color: white;
+}
+
+.letter-button.active:hover {
+  background-color: #0056b3; /* Darker blue */
+}
+
+.letter-button.disabled {
+  background-color: #d6d6d6; /* Light gray */
+  color: #888888; /* Muted gray */
+  cursor: not-allowed;
+}

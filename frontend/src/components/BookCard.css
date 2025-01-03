@@ -1,8 +1,8 @@
 /* src/components/BookCard.css */
 .card-container {
-    height: 500px; /* Uniform height for all cards */
-    display: flex;
-    flex-direction: column;
+    height: 500px !important; /* Uniform height for all cards */
+    display: flex !important;
+    flex-direction: column !important;
     justify-content: space-between; /* Distribute content evenly */
     align-items: center; /* Center content */
     text-align: center; /* Align text uniformly */

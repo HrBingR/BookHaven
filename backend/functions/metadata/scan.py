@@ -15,6 +15,7 @@ def find_epubs(base_directory):
 
 def extract_metadata(epub_path, base_directory):
     book = ebookmeta.get_metadata(epub_path)
+    unique_id = book.identifier or epub_path
     title = book.title
     authors = book.author_list
     series = book.series or ''
@@ -22,9 +23,9 @@ def extract_metadata(epub_path, base_directory):
     cover_image_data = book.cover_image_data
     cover_media_type = book.cover_media_type
 
-
     relative_path = os.path.relpath(epub_path, base_directory)
     return {
+        'identifier': unique_id,
         'title': title,
         'authors': authors,
         'series': series,
@@ -40,11 +41,20 @@ def scan_and_store_metadata(base_directory):
     logger.debug(f"Found {len(epubs)} epubs in base directory: {base_directory}")
     for epub_path in epubs:
         metadata = extract_metadata(epub_path, base_directory)
-        cover_length = len(metadata['cover_image_data']) if metadata['cover_image_data'] else 0
-        logger.debug(f"Extracted cover for {metadata['title']}: {cover_length} bytes")
-        existing_record = session.query(EpubMetadata).filter_by(relative_path=metadata['relative_path']).first()
-        if not existing_record:
+        unique_id = metadata['identifier']
+
+        existing_record = session.query(EpubMetadata).filter_by(identifier=unique_id).first()
+
+        if existing_record:
+            # Update the existing record if the relative path has changed
+            if existing_record.relative_path != metadata['relative_path']:
+                existing_record.relative_path = metadata['relative_path']
+                session.add(existing_record)
+                logger.debug(f"Updated relative_path in DB for identifier={unique_id}")
+        else:
+            # Create a new entry if no record exists
             new_entry = EpubMetadata(
+                identifier=unique_id,
                 title=metadata['title'],
                 authors=', '.join(metadata['authors']),
                 series=metadata['series'],
@@ -54,6 +64,6 @@ def scan_and_store_metadata(base_directory):
                 cover_media_type=metadata['cover_media_type']
             )
             session.add(new_entry)
-            logger.debug(f"Stored new metadata in DB for relative_path={metadata['relative_path']}")
+            logger.debug(f"Stored new metadata in DB for identifier={unique_id}")
 
     session.commit()

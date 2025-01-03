@@ -4,16 +4,34 @@ import axios from 'axios';
 import SearchBar from './SearchBar';
 import Books from './Books';
 import { Container } from 'react-bootstrap';
+import { Book } from '../types';
 
-interface Book {
-  id: number;
-  title: string;
-  authors: string[];
-  series: string;
-  seriesindex: number;
-  coverUrl: string;
-  relative_path: string;
-}
+const groupAndSortBooks = (books: Book[]): Book[] => {
+  // Copy the array to avoid mutating the original data
+  const sortedBooks = [...books];
+
+  // Sort by author, then series, then series index
+  sortedBooks.sort((a, b) => {
+    // First, compare authors (case-insensitive)
+    const authorComparison = a.authors[0].localeCompare(b.authors[0]);
+    if (authorComparison !== 0) return authorComparison;
+
+    // If authors are the same, compare by series (null values last)
+    if (a.series && b.series) {
+      const seriesComparison = a.series.localeCompare(b.series);
+      if (seriesComparison !== 0) return seriesComparison;
+    } else if (a.series) {
+      return -1; // a has a series, b doesn't -> a comes first
+    } else if (b.series) {
+      return 1; // b has a series, a doesn't -> b comes first
+    }
+
+    // If series are the same (or both null), sort by series index (numerical order)
+    return (a.seriesindex || 0) - (b.seriesindex || 0);
+  });
+
+  return sortedBooks;
+};
 
 const Home: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -32,7 +50,8 @@ const Home: React.FC = () => {
       const response = await axios.get('/api/books', {
         params: { query: searchTerm, page: currentPage, limit: booksPerPage },
       });
-      setBooks(response.data.books);
+      const processedBooks = groupAndSortBooks(response.data.books);
+      setBooks(processedBooks);
 //      setTotalBooks(response.data.total_books); // Store total books count
 //      setTotalPages(response.data.total_pages); // Store total pages
     } catch (error) {
@@ -52,7 +71,12 @@ const Home: React.FC = () => {
   return (
     <Container fluid className="p-4">
       <SearchBar onSearch={handleSearch} />
-      <Books books={books} onPageChange={handlePageChange} currentPage={currentPage} />
+      <Books
+        books={books}
+        onPageChange={handlePageChange}
+        currentPage={currentPage}
+        refreshBooks={fetchBooks} // Pass fetchBooks as a prop
+      />
     </Container>
   );
 };

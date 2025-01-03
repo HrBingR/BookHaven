@@ -10,7 +10,9 @@ const Sidebar: React.FC = () => {
         <Link to="/" className="list-group-item list-group-item-action bg-light">
           <i className="fas fa-home me-2"></i> Home
         </Link>
-        {/* Add more navigation items here in the future */}
+        <Link to="/authors" className="list-group-item list-group-item-action bg-light">
+          <i className="fas fa-users me-2"></i> Authors {/* Add Authors link here */}
+        </Link>
       </div>
     </div>
   );

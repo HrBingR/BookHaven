@@ -7,6 +7,7 @@ class EpubMetadata(Base):
     __tablename__ = 'epub_metadata'
 
     id = Column(Integer, primary_key=True)
+    identifier = Column(String, unique=True, nullable=False) # Add 'index=True'
     title = Column(String)
     authors = Column(String)
     series = Column(String)
