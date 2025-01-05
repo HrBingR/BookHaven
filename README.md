@@ -43,13 +43,14 @@ Compatible with MySQL, PostgreSQL, or SQLite for storing metadata.
 ### Docker
 Follow these steps to deploy the application with Docker Compose:
 1. **Download Configuration Files**
+
 Download or clone the repository to get `compose.yml.example` and `.env.example`.
 2. **Rename the Example Files**
 ``` bash
    mv compose.yml.example compose.yml
    mv .env.example .env
 ```
-1. **Customize the `.env` File**
+3. **Customize the `.env` File**
 
 Edit `.env` to configure essential settings:
 
@@ -58,17 +59,17 @@ Edit `.env` to configure essential settings:
     - **DB_TYPE**: Database engine (e.g., mysql, sqlite, postgres).
     - _Other DB_ settings_* for your database configuration.
 
-2. **Start the Application**
+4. **Start the Application**
 
 Run the following command:
 ``` bash
    docker compose up -d
 ```
 This starts the `epub-reader` and MySQL containers.
-3. **Access the Application**
+5. **Access the Application**
 
 Open your browser and navigate to the `BASE_URL` you configured (default is `http://localhost:5000`).
-4. **Stopping the Application**
+6. **Stopping the Application**
 
 To stop the service:
 ``` bash
