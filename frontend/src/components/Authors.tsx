@@ -1,10 +1,7 @@
 // Authors.tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './Authors.Grid.css'; // Grid styles
-import './Authors.General.css';
-import './Authors.Responsive.css';
-import './Authors.Buttons.css';
+import './All.css';
 import AuthorGridCell from './AuthorGridCell'; // Import the new component
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -108,7 +105,7 @@ const expandAll = () => {
         <button className="btn btn-primary me-2" onClick={expandAll}>
           Expand All
         </button>
-        <button className="btn btn-secondary" onClick={collapseAll}>
+        <button className="btn btn-secondary collapse-button" onClick={collapseAll}>
           Collapse All
         </button>
       </div>
