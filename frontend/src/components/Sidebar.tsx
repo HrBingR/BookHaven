@@ -43,10 +43,12 @@ const Sidebar: React.FC = () => {
       >
         <div className="sidebar-heading p-3">ePub Library</div>
         <div className="list-group list-group-flush">
-          <Link to="/" className="list-group-item list-group-item-action bg-light">
+          <Link to="/" className="list-group-item list-group-item-action bg-light"
+          onClick={toggleSidebar}>
             <i className="fas fa-home me-2"></i> Home
           </Link>
-          <Link to="/authors" className="list-group-item list-group-item-action bg-light">
+          <Link to="/authors" className="list-group-item list-group-item-action bg-light"
+          onClick={toggleSidebar}>
             <i className="fas fa-users me-2"></i> Authors
           </Link>
         </div>
