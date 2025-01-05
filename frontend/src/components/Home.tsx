@@ -70,13 +70,15 @@ const Home: React.FC = () => {
 
   return (
     <Container fluid className="p-4">
-      <SearchBar onSearch={handleSearch} />
-      <Books
-        books={books}
-        onPageChange={handlePageChange}
-        currentPage={currentPage}
-        refreshBooks={fetchBooks} // Pass fetchBooks as a prop
-      />
+      <div className="wrapper-div">
+        <SearchBar onSearch={handleSearch} />
+        <Books
+          books={books}
+          onPageChange={handlePageChange}
+          currentPage={currentPage}
+          refreshBooks={fetchBooks} // Pass fetchBooks as a prop
+        />
+      </div>
     </Container>
   );
 };
