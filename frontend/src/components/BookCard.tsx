@@ -2,7 +2,7 @@
 import React, {useState} from 'react';
 import { Card, Button, Modal, Form, Alert } from 'react-bootstrap';
 import axios from 'axios';
-import './BookCard.css'; // Import the CSS file
+import './All.css'; // Import the CSS file
 import { Book } from '../types';
 
 interface BookCardProps {
@@ -63,7 +63,14 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks }) => {
 
   return (
     <Card className="card-container">
-      <Card.Img variant="top" src={book.coverUrl} alt={book.title} className="book-cover" />
+      <a href={`/read/${book.identifier}`}>
+        <Card.Img
+            variant="top"
+            src={book.coverUrl}
+            alt={book.title}
+            className="book-cover"
+        />
+      </a>
       <Card.Body>
         <Card.Title>{book.title}</Card.Title>
         <Card.Text>By {book.authors.join(', ')}</Card.Text>
@@ -74,10 +81,30 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks }) => {
         )}
       </Card.Body>
       <div className="card-footer">
-        <Button variant="primary" href={`/download/${book.identifier}`} className="me-2">
-          Download
+        {/* Read Button */}
+        <Button
+            variant="primary"
+            href={`/read/${book.identifier}`}
+            className="me-2 read-button"
+        >
+          <i className="fas fa-book"></i>
         </Button>
-        <Button variant="outline-secondary" onClick={() => setShowModal(true)}>
+
+        {/* Download Button */}
+        <Button
+            variant="primary"
+            href={`/download/${book.identifier}`}
+            className="me-2 download-button"
+        >
+          <i className="fas fa-download"></i>
+        </Button>
+
+        {/* Edit Button */}
+        <Button
+            variant="outline-secondary"
+            className="me-2 edit-button"
+            onClick={() => setShowModal(true)}
+        >
           <i className="fas fa-pencil-alt"></i>
         </Button>
       </div>
@@ -92,9 +119,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks }) => {
             <Form.Group controlId="formTitle" className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
               />
             </Form.Group>
             <Form.Group controlId="formAuthors" className="mb-3">
