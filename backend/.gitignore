@@ -1,3 +1,4 @@
 ../.idea
 .env
 epub_library.db
+venv
