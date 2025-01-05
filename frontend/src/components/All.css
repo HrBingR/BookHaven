@@ -1,0 +1,517 @@
+/* ==========================
+   Grid to Flexbox Layout
+========================== */
+.grid {
+  display: flex; /* Flexbox layout for grid */
+  flex-wrap: wrap; /* Allow items to wrap naturally into rows */
+  gap: 15px; /* Space between elements (horizontal and vertical) */
+  justify-content: center; /* Center-align grid items */
+  margin: 1rem auto;
+  max-width: 1500px; /* Limit the width for alignment */
+  position: relative; /* Relative position for animations */
+}
+
+/* Default Grid Cell Style */
+.grid-cell {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  flex: 0 0 calc(15% - 10px); /* Default column size */
+  max-width: calc(15% - 10px); /* Limit width so it stays within bounds */
+  position: relative;
+  text-align: center;
+  overflow: hidden; /* Keep content contained within bounds */
+}
+
+.grid-cell.expanded {
+  flex: 0 0 calc(100% - 20px); /* Expanded cards take full width */
+  max-width: calc(100% - 20px); /* Expanded card respects grid spacing */
+  z-index: 10; /* Ensure expanded card stacks above */
+}
+
+/* ==========================
+   Expanded Authors List Styles
+========================== */
+
+/* Hide authors list when not expanded */
+.authors-list {
+  visibility: hidden;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: none;
+  margin-top: 2px;
+}
+
+/* Expanded card's authors-list */
+.grid-cell.expanded .authors-list {
+  visibility: visible;
+  opacity: 1;
+  max-height: 500px; /* Adjust based on content */
+  transition: visibility 0s linear 0s, opacity 0.3s ease-in, max-height 0.3s ease-in;
+}
+
+.grid-cell .authors-list {
+  visibility: hidden;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: none;
+  margin-top: 2px;
+}
+
+.authors-list .author-item {
+  padding: 5px 0;
+  font-size: 16px;
+  color: #FFF;
+  /*display: flex;*/
+  align-items: center;
+}
+
+.author-item i {
+  margin-right: 80px; /* Spacing between icon and text */
+  color: #007bff; /* Icon color (same as letter button) */
+}
+
+.authors-divider {
+  width: 100%; /* Default to fill parent’s width */
+  max-width: 1500px; /* Match grid's max-width */
+  height: 2px; /* Thin divider line */
+  background-color: #000; /* Light gray color */
+  border: none; /* Remove any default browser border */
+  margin: 2rem auto; /* Space above and below the line */
+}
+
+.authors-grid {
+  display: grid; /* Enable grid layout */
+  grid-template-columns: repeat(auto-fit, 170px); /* Responsive grid */
+  gap: 5px; /* Space between items */
+  margin: auto; /* Slight spacing from the top */
+  justify-items: center; /* Center-align buttons/links */
+}
+
+   .series-title {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 10px;
+     font-size: 1.5rem;
+     max-width: 800px;
+     margin: 1rem auto;
+   }
+   .series-title::before,
+   .series-title::after {
+     content: "----------";
+     flex: 1; /* Stretches the dashes */
+     text-align: center;
+     color: #888;
+   }
+.full-width {
+  display: flex;
+  justify-content: center; /* Center content inside */
+  flex-wrap: wrap; /* Enable wrapping for smaller screens */
+  width: 100%; /* Ensure full width */
+  margin: 0 auto; /* Horizontally center container */
+}
+
+.row-centered {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.single-book-row {
+    justify-content: center; /* Center the book in the row */
+    display: flex; /* Ensure row alignment works correctly */
+}
+
+.single-book-col {
+    flex: 0 1 100%; /* Ensure the column takes up the full width */
+    max-width: 100%; /* Override default max-width to span fully */
+    text-align: center; /* Ensure the content is centered */
+}
+
+.container {
+    width: 100%; /* Allow container to occupy the full width */
+    max-width: 100%; /* Remove unnecessary width restrictions */
+    margin: 0 auto; /* Center it if maximum width is applied elsewhere */
+}
+
+.placeholder-col {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.placeholder-div {
+    height: 0; /* No visible content */
+    width: 200px; /* Match full-width of a grid cell */
+    background-color: transparent; /* Invisible */
+    border: none;
+}
+
+/* ==========================
+   General Page Styles
+========================== */
+body {
+  background: linear-gradient(135deg, #ece9e6, #ffffff); /* Subtle gradient */
+  font-family: Arial, sans-serif; /* Clean and modern font */
+  margin: 0;
+  padding: 0;
+}
+
+/* General Container */
+.authors-container {
+  max-width: 1500px;
+  /*margin: auto;*/
+  padding: 20px;
+  margin-top: 0px;
+}
+
+/* Heading */
+.page-heading {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Light shadow effect */
+}
+
+/* Expand/Collapse Controls */
+.expand-controls {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.collapse-button {
+  margin-top: 0px;
+}
+
+/* ==========================
+Button and Letter Button Styles
+========================== */
+
+button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px; /* Rounded corners */
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+button:focus {
+  outline: none; /* Remove default focus styles */
+}
+
+/* Expand All Button */
+.btn-primary {
+  background-color: #4caf50; /* Green */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+/* Collapse All Button */
+.btn-secondary {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #d32f2f; /* Darker red on hover */
+}
+
+.letter-button {
+  width: 150px; /* Fixed width for buttons */
+  margin: auto; /* Center-align button */
+  padding: 10px;
+  font-weight: bold;
+  font-size: 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.letter-button.active {
+  background-color: #007bff; /* Blue */
+  color: white;
+}
+
+.letter-button.active:hover {
+  background-color: #0056b3; /* Darker blue */
+}
+
+.letter-button.disabled {
+  background-color: #d6d6d6; /* Light gray */
+  color: #888888; /* Muted gray */
+  cursor: not-allowed;
+}
+
+.link-button {
+  display: inline-block; /* Allow inline-block for proper sizing */
+  font-size: 16px;
+  width: 170px;
+  margin: auto;
+  padding: 10px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  color: white; /* White text */
+  background-color: #007bff; /* Same blue as active buttons */
+  text-decoration: none; /* Remove underline for links */
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.link-button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.link-button:active {
+  background-color: #003f88; /* Even darker when active */
+}
+
+.no-authors {
+  color: #888888; /* Muted gray for unavailable message */
+  font-style: italic;
+}
+
+
+
+.card-container {
+    height: 500px !important; /* Uniform height for all cards */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between; /* Distribute content evenly */
+    align-items: center; /* Center content */
+    text-align: center; /* Align text uniformly */
+    overflow: hidden; /* Prevent overflowing content */
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.book-cover {
+    max-height: 300px; /* Limit the height for book covers */
+    max-width: 100%; /* Ensure image fits within the card width */
+    object-fit: contain; /* Maintain aspect ratio, avoids distortion */
+}
+
+.book-cover:hover {
+  cursor: pointer;
+  opacity: 0.9; /* Slightly dim the image on hover */
+    scale: 1.05;
+  transition: opacity 0.2s ease-in-out, scale 0.2s ease-in-out;
+}
+
+.card-footer {
+    margin-top: auto; /* Push the button to the bottom of the card body */
+    border-top: none !important;
+    background-color: #FFF !important;
+    padding: 0px !important;
+  flex-direction: row;
+  display:flex;
+}
+.card-text {
+    margin-bottom: 2px !important;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between; /* Space between the elements */
+    align-items: center; /* Vertically align all elements */
+    position: relative; /* Allow contained positioning */
+    margin-bottom: 16px; /* Space below the header */
+}
+
+/* Spacer and Back Button */
+.header-container .spacer,
+.header-container .back-button {
+    width: 150px; /* Fixed width ensures equal space for spacer and button */
+    flex-shrink: 0; /* Prevent uneven shrinking */
+}
+
+.header-container .title {
+    flex-grow: 1; /* Title takes up remaining space */
+    text-align: center; /* Center the text */
+    margin: 0; /* Remove default browser margins */
+}
+
+.reader-container {
+  display: flex; /* Use flexbox for side-by-side layout */
+  flex-direction: row; /* Default to horizontal alignment */
+  height: 100vh; /* Full height */
+  background-color: #f8f9fa; /* Light background for reading */
+  padding: 0; /* Remove padding for side-by-side layout */
+  width: 60vw;
+  margin: auto;
+}
+
+.reader-container h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.reader-content {
+  flex: 1; /* Take the remaining space */
+  padding: 20px; /* Add some padding for internal spacing */
+  overflow-y: hidden; /* Prevent vertical scrollbars unless necessary */
+  background: #fff; /* White background for reader */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Slight shadow for separation */
+  width: 100%;
+  position: relative;
+}
+
+.reader-font-controls {
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  z-index: 2; /* Ensure it's above everything */
+  display: flex;
+  flex-direction: column;
+}
+
+.reader-font-controls > button {
+  font-size: 30px;
+  color: rgb(226, 226, 226);
+  background-color: #fff;
+}
+
+.reader-content button[style*="top: 10px"][style*="left: 10px"] {
+  position: absolute; /* Ensure it remains in the corner */
+  top: 30px !important;
+  left: 10px !important;
+}
+
+/* Left Arrow Button */
+.reader-content button[style*="top: 50%"][style*="left: 1px"] {
+  position: absolute !important;
+  top: 10px !important; /* Move it to the same line as ToC */
+  left: 82px !important; /* Add spacing after the ToC button */
+  font-size: 40px !important; /* Shrink font if oversized on small screens */
+  margin-top: 0 !important; /* Remove unnecessary margin */
+  max-width: 34px;
+}
+
+/* Right Arrow Button */
+.reader-content button[style*="top: 50%"][style*="right: 1px"] {
+  position: absolute !important;
+  top: 10px !important; /* Move to the same line as ToC */
+  right: 10px !important; /* Stay near the far-right edge */
+  font-size: 40px !important; /* Shrink font if needed */
+  margin-top: 0 !important;
+  max-width: 34px;
+}
+
+/* Optional: Hover Effects for Arrows */
+.reader-content button[style*="top: 50%"]:hover {
+  color: rgb(255, 255, 255) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-radius: 4px !important;
+}
+
+.sidebar {
+  position: fixed; /* Sidebar overlays the content, instead of pushing it */
+  top: 0;
+  left: 0;
+  background: #f8f9fa;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Optional shadow for better overlay effect */
+  z-index: 999; /* Ensure it appears above main content */
+}
+
+.sidebar.closed {
+  width: 0; /* Hide sidebar when closed (state-driven) */
+  overflow: hidden; /* Prevent content overflow when hidden */
+}
+
+/* Toggle Button for Smaller Viewports */
+.toggle-sidebar-btn {
+  display: none; /* Hide the button on larger screens */
+  background: #007bff !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+.wrapper-div {
+  margin-top: 0px;
+}
+
+/* ==========================
+   Responsive Design
+========================== */
+
+@media (max-width: 1450px) {
+  .grid-cell {
+    width: 100%; /* Full width on smaller screens */
+    flex: 0 0 calc(24.1% - 10px); /* Default column size */
+    max-width: calc(24.1% - 10px); /* Limit width so it stays within bounds */
+  }
+}
+
+@media (max-width: 1200px) {
+  .reader-container {
+    width: 80vw;
+  }
+}
+
+@media (max-width: 950px) {
+  .grid-cell {
+    width: 100%; /* Full width on smaller screens */
+    flex: 0 0 calc(30% - 10px); /* Default column size */
+    max-width: calc(30% - 10px); /* Limit width so it stays within bounds */
+  }
+
+  button {
+    width: 100%; /* Full-width buttons */
+    margin-bottom: 0.5rem; /* Spacing for stacked buttons */
+  }
+
+  .page-heading {
+    font-size: 2rem; /* Adjust heading size for smaller screens */
+  }
+  .reader-container {
+    width: 75vw;
+  }
+}
+
+@media (max-width: 780px) {
+  .grid-cell {
+    width: 100%; /* Full width on smaller screens */
+    flex: 0 0 calc(49% - 10px); /* Default column size */
+    max-width: calc(49% - 10px); /* Limit width so it stays within bounds */
+  }
+  .sidebar {
+    width: 0; /* Hide the sidebar by default */
+  }
+
+  .toggle-sidebar-btn {
+    display: block; /* Make the toggle button visible */
+  }
+  .reader-container {
+    width: 100vw;
+  }
+  .wrapper-div {
+    margin-top: 20px;
+  }
+  .authors-container {
+    margin-top: 20px;
+  }
+  .collapse-button {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 540px) {
+  .grid-cell {
+    width: 100%; /* Full width on smaller screens */
+    flex: 0 0 calc(99% - 10px); /* Default column size */
+    max-width: calc(80% - 10px); /* Limit width so it stays within bounds */
+  }
+}
