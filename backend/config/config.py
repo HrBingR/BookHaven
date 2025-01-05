@@ -7,7 +7,6 @@ load_dotenv()
 class Config:
     # Provide a default value for BASE_DIRECTORY
     BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
-    print(f"Using base directory: {BASE_DIRECTORY}")
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
     BASE_URL = os.getenv('BASE_URL')
     if not BASE_URL:
