@@ -7,6 +7,8 @@ services:
       - .env
     networks:
       - epub-reader-net
+    volumes:
+      - /path/to/mysql/storage:/var/lib/mysql
 
   epub-reader:
     container_name: epub-reader
@@ -19,6 +21,8 @@ services:
       - /path/to/epub/directory:${BASE_DIRECTORY}
     networks:
       - epub-reader-net
+    depends_on:
+      - mysql
 
 networks:
   epub-reader-net:
