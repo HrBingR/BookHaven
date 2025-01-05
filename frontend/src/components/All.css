@@ -329,6 +329,7 @@ button:focus {
     align-items: center; /* Vertically align all elements */
     position: relative; /* Allow contained positioning */
     margin-bottom: 16px; /* Space below the header */
+  margin-top: 30px;
 }
 
 /* Spacer and Back Button */
@@ -443,6 +444,16 @@ button:focus {
   margin-top: 0px;
 }
 
+
+.input-group {
+  display: flex;
+  flex-direction: row;
+}
+.search-bar {
+  width: 93%;
+  margin-right: 10px;
+}
+
 /* ==========================
    Responsive Design
 ========================== */
@@ -453,11 +464,19 @@ button:focus {
     flex: 0 0 calc(24.1% - 10px); /* Default column size */
     max-width: calc(24.1% - 10px); /* Limit width so it stays within bounds */
   }
+  .search-bar {
+    width: 90%;
+    margin-right: 10px;
+  }
 }
 
 @media (max-width: 1200px) {
   .reader-container {
     width: 80vw;
+  }
+  .search-bar {
+    width: 85%;
+    margin-right: 10px;
   }
 }
 
@@ -498,14 +517,32 @@ button:focus {
     width: 100vw;
   }
   .wrapper-div {
-    margin-top: 20px;
+    margin-top: 30px;
+  }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .button-spacer {
+    margin-top: 10px;
+  }
+  .search-bar {
+    width: 100%;
+    margin-right: 0px;
   }
   .authors-container {
-    margin-top: 20px;
+    margin-top: 30px;
   }
   .collapse-button {
     margin-top: 10px;
   }
+   .series-title::before,
+   .series-title::after {
+     content: "--";
+     flex: 1; /* Stretches the dashes */
+     text-align: center;
+     color: #888;
+   }
 }
 
 @media (max-width: 540px) {
