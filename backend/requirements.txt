@@ -6,6 +6,7 @@ click==8.1.8
 cryptography==44.0.0
 EbookLib==0.18
 ebookmeta==1.2.11
+filelock==3.16.1
 Flask==3.1.0
 Flask-Caching==2.3.0
 Flask-Cors==5.0.0
