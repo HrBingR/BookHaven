@@ -1,0 +1,25 @@
+services:
+  # The MySQL container is optional if you already have your own DB in place.
+  mysql:
+    container_name: mysql
+    image: mysql:latest
+    env_file:
+      - .env
+    networks:
+      - epub-reader-net
+
+  epub-reader:
+    container_name: epub-reader
+    image: epub-reader:latest
+    env_file:
+      - .env
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    volumes:
+      - /path/to/epub/directory:${BASE_DIRECTORY}
+    networks:
+      - epub-reader-net
+
+networks:
+  epub-reader-net:
+    driver: bridge
