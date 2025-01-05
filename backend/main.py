@@ -137,9 +137,8 @@ def get_books():
     """
     # Get query and pagination parameters
     query = request.args.get('query', '', type=str)
-    page = request.args.get('page', 1, type=int)
-    limit = request.args.get('limit', 10, type=int)
-    offset = (page - 1) * limit
+    offset = request.args.get('offset', 0, type=int)  # Using offset directly from query
+    limit = request.args.get('limit', 18, type=int)  # Default to 18 books per request
 
     session = get_session()
 
@@ -162,9 +161,6 @@ def get_books():
     # Convert book metadata to JSON
     book_list = []
     for book in books:
-        # Add debug logging to see the full relative_path
-        logger.debug(f"Constructing cover URL for book id={book.id}, relative_path={book.relative_path}")
-
         book_list.append({
             "id": book.id,
             "title": book.title,
@@ -179,8 +175,9 @@ def get_books():
     return jsonify({
         "books": book_list,
         "total_books": total_books,
-        "current_page": page,
-        "total_pages": (total_books + limit - 1) // limit  # Ceiling division
+        "fetched_offset": offset,
+        "next_offset": offset + limit,  # Allow frontend to easily compute next fetch
+        "remaining_books": max(0, total_books - (offset + limit))  # Useful for termination
     })
 
 @app.route('/api/covers/<string:book_identifier>', methods=['GET'])
