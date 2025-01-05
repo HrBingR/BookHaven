@@ -1,14 +1,16 @@
 import os
 import threading
+import time
+import json
 from flask import Flask, render_template, abort, send_from_directory, request, jsonify, Response, has_request_context, url_for
 from models.epub_metadata import EpubMetadata
 from functions.db import init_db, get_session
-from functions.metadata.scan import scan_and_store_metadata
+from functions.metadata.scan import scan_and_store_metadata, find_epubs
 from config.config import config
 from config.logger import logger
 from flask_caching import Cache
 from flask_cors import CORS
-import logging
+from filelock import FileLock
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/static")
 CORS(app, resources={
@@ -23,37 +25,102 @@ cache = Cache(app, config={
     "CACHE_DEFAULT_TIMEOUT": 300  # Cache timeout in seconds (5 minutes)
 })
 
-# from functions.metadata.edit import edit_metadata
 scan_lock = threading.Lock()
+scan_thread = None  # To track the currently running thread (if any)
+scan_running = False  # True if a scan is currently running
+last_scan_time = 0  # To track the last scan's timestamp
+LOCK_FILE_PATH = "./scan_lock.lock"
+LAST_SCAN_FILE_PATH = "./last_scan_time.json"
 
 init_db()
-library_initialized = False
+
+def get_last_scan_time():
+    """Read the last scan time from a shared file, defaulting to 0 if not set."""
+    if not os.path.exists(LAST_SCAN_FILE_PATH):
+        return 0  # No scan has been performed yet
+
+    try:
+        with open(LAST_SCAN_FILE_PATH, "r") as f:
+            data = json.load(f)
+            return data.get("last_scan_time", 0)  # Ensure backward compatibility
+    except (IOError, ValueError, json.JSONDecodeError):
+        return 0  # If the file is corrupted or empty, reset to 0
+
+
+def set_last_scan_time(timestamp):
+    """Write the last scan time to the shared file."""
+    temp_file_path = f"{LAST_SCAN_FILE_PATH}.tmp"  # Write to a temporary file first
+    try:
+        with open(temp_file_path, "w") as f:
+            json.dump({"last_scan_time": timestamp}, f)
+        os.replace(temp_file_path, LAST_SCAN_FILE_PATH)  # Atomically replace the file
+    except IOError as e:
+        logger.error(f"Failed to write last scan time: {e}")
+
+def background_scan():
+    """
+    Perform the scanning of the library in a separate thread.
+    Ensure that only one scan runs at a time.
+    """
+    global scan_running
+
+    try:
+        # Perform the scan
+        base_directory = config.BASE_DIRECTORY
+        logger.debug("Background scan started. Base directory: " + base_directory)
+
+        epubs = find_epubs(base_directory)
+        epub_length = int(len(epubs))
+        logger.debug("Found " + str(epub_length) + " ePub files in " + base_directory)
+
+        session = get_session()
+        db_epub_count = int(session.query(EpubMetadata).count())
+        logger.debug("Found " + str(db_epub_count) + " books in database.")
+
+        if db_epub_count != epub_length:
+            logger.info("Changes detected between database and filesystem. Running scan...")
+            scan_and_store_metadata(base_directory)
+            logger.info("Library scan complete.")
+        else:
+            logger.debug("No changes between database and filesystem. Scan skipped.")
+
+    except Exception as e:
+        logger.error("Error during background scan: %s", str(e))
+
+    finally:
+        # Ensure that the scanner state is reset, even if something fails
+        logger.debug("Background scan finished.")
+        scan_running = False
+        cache.clear()  # Evict cache
 
 @app.before_request
-def initialize_library_once():
-    """
-       This function checks if the library is initialized.
-       If it is not, it triggers a library scan the first time a request happens.
-       """
-    global library_initialized
-    global scan_lock
+def scan_library_for_changes():
+    # Use a file-based lock to synchronize between workers
+    lock = FileLock(LOCK_FILE_PATH)
 
-    if not library_initialized and has_request_context():
-        session = get_session()
-        total_books = session.query(EpubMetadata).count()
+    try:
+        # Try acquiring the lock
+        with lock.acquire(timeout=10):  # Wait max 10 seconds for the lock
+            logger.debug("Acquired file lock for scanning.")
 
-        if total_books == 0:
-            with scan_lock:  # Ensure only one scan runs at a time
-                if not library_initialized:  # Double-check inside the lock
-                    cache.clear()
-                    logger.info("No books found in database on app startup. Triggering library scan.")
-                    base_directory = config.BASE_DIRECTORY
-                    scan_and_store_metadata(base_directory)
-                    logger.info("Library scan complete and database populated.")
-                    library_initialized = True
-        else:
-            library_initialized = True
-            logger.info("Books already exist in database. No scan required.")
+            # Atomically read/write shared `last_scan_time`
+            current_time = time.time()
+            last_scan_time = get_last_scan_time()
+
+            if current_time - last_scan_time < 5:  # Adjust timer as needed
+                logger.debug("Scan skipped: Triggered too soon after the last scan.")
+                return None
+
+            # Update last scan time to prevent other workers from triggering
+            set_last_scan_time(current_time)
+
+            # Start scan in a background thread
+            thread = threading.Thread(target=background_scan)
+            thread.daemon = True  # Ensure the thread exits with the process
+            thread.start()
+
+    except TimeoutError:
+        logger.debug("Another worker is already running the scan. Skipping.")
 
 def format_series_index(value):
     if value.is_integer():
@@ -137,22 +204,6 @@ def get_cover(book_identifier):
     return Response(book_record.cover_image_data, mimetype=book_record.cover_media_type, headers={
         "Cache-Control": "public, max-age=31536000"  # Cache for 1 year
     })
-
-@app.route('/api/scan', methods=['POST'])
-def scan_library():
-    """
-       Trigger a manual scan of the library.
-       Prevent concurrent scans using a threading lock.
-       """
-    global scan_lock
-
-    with scan_lock:
-        cache.clear()
-        logger.info("Manual scan triggered.")
-        base_directory = config.BASE_DIRECTORY
-        scan_and_store_metadata(base_directory)
-        logger.info("Manual scan complete.")
-        return jsonify({"message": "Library scanned successfully"}), 200
 
 @app.route('/download/<string:book_identifier>', methods=['GET'])
 def download(book_identifier):
@@ -374,6 +425,7 @@ def serve_react_app(path):
     Serve the React app's index.html for all non-API routes.
     React will take over routing for SPA functionality.
     """
+
     static_folder = os.path.join(app.root_path, "../frontend/dist")
 
     if path != "" and os.path.exists(os.path.join(static_folder, path)):
