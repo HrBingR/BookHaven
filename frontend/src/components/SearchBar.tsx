@@ -17,15 +17,19 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   return (
     <Form onSubmit={handleSubmit}>
       <InputGroup>
-        <FormControl
-          type="text"
-          placeholder="Search for books, authors, or series..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <Button variant="primary" type="submit">
-          Search
-        </Button>
+        <div className={"search-bar"}>
+          <FormControl
+            type="text"
+            placeholder="Search for books, authors, or series..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className={"button-spacer"}>
+          <Button variant="primary" type="submit">
+            Search
+          </Button>
+        </div>
       </InputGroup>
     </Form>
   );
