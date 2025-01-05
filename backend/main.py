@@ -1,14 +1,22 @@
 import os
 import threading
-from flask import Flask, render_template, abort, send_from_directory, request, jsonify, Response, has_request_context
+from flask import Flask, render_template, abort, send_from_directory, request, jsonify, Response, has_request_context, url_for
 from models.epub_metadata import EpubMetadata
 from functions.db import init_db, get_session
 from functions.metadata.scan import scan_and_store_metadata
 from config.config import config
 from config.logger import logger
 from flask_caching import Cache
+from flask_cors import CORS
+import logging
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/static")
+CORS(app, resources={
+    r"/api/*": {"origins": "*"},  # Allow all origins for API routes
+    r"/stream/*": {"origins": "*"},  # Allow all origins for streaming routes
+    r"/files/*": {"origins": "*"},  # Allow all origins for file-serving routes
+    r"/download/*": {"origins": "*"},  # Allow all origins for file-serving routes
+})
 
 cache = Cache(app, config={
     "CACHE_TYPE": "SimpleCache",  # Use in-memory caching for simplicity
@@ -46,7 +54,6 @@ def initialize_library_once():
         else:
             library_initialized = True
             logger.info("Books already exist in database. No scan required.")
-
 
 def format_series_index(value):
     if value.is_integer():
@@ -147,13 +154,6 @@ def scan_library():
         logger.info("Manual scan complete.")
         return jsonify({"message": "Library scanned successfully"}), 200
 
-@app.route('/')
-def index():
-    session = get_session()
-    books = session.query(EpubMetadata).all()
-    return render_template('index.html', books=books)
-
-
 @app.route('/download/<string:book_identifier>', methods=['GET'])
 def download(book_identifier):
     session = get_session()
@@ -164,12 +164,45 @@ def download(book_identifier):
         abort(404, description="Resource not found")
 
     relative_path = book_record.relative_path
+    full_path = os.path.join(config.BASE_DIRECTORY, relative_path)
 
     # Ensure the base directory remains consistent
     try:
         return send_from_directory(config.BASE_DIRECTORY, relative_path, as_attachment=True)
     except FileNotFoundError:
         abort(404, description="File not found")
+
+@app.route('/stream/<string:book_identifier>', methods=['GET'])
+def stream(book_identifier):
+    session = get_session()
+
+    # Fetch the book's metadata from the database
+    book_record = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
+    if not book_record:
+        abort(404, description="Book not found.")
+
+    # Get the relative path of the book
+    relative_path = book_record.relative_path
+
+    # Combine base directory + relative path to get the full file path
+    full_path = os.path.join(config.BASE_DIRECTORY, relative_path)
+
+    # Check if the file exists
+    if not os.path.exists(full_path):
+        abort(404, description="ePub file not found.")
+
+    # Generate the correct accessible URL for this file
+    epub_file_url = config.BASE_URL.rstrip("/") + url_for('serve_book_file', filename=relative_path)
+
+    return jsonify({"url": epub_file_url})
+
+@app.route('/files/<path:filename>', methods=['GET'])
+def serve_book_file(filename):
+    try:
+        base_directory = config.BASE_DIRECTORY  # Root location of your ePub files
+        return send_from_directory(base_directory, filename)
+    except FileNotFoundError:
+        abort(404, description="File not found.")
 
 @app.route('/api/books/edit', methods=['POST'])
 def edit_book_metadata():
@@ -213,6 +246,7 @@ def edit_book_metadata():
         book_record.cover_media_type = new_cover.mimetype
 
     session.commit()
+    cache.clear()
     return jsonify({"message": "Book metadata updated successfully"}), 200
 
 @app.route('/api/authors', methods=['GET'])
@@ -246,6 +280,108 @@ def get_authors():
         "authors": sorted_authors,
         "total_authors": len(sorted_authors)
     })
+
+@app.route('/api/authors/<string:author_name>', methods=['GET'])
+def get_author_books(author_name):
+    """
+    Returns all books by a specific author.
+    """
+    session = get_session()
+
+    normalized_author_name = author_name.replace('-', ' ').lower()
+
+    # Query books with case-insensitive match
+    author_query = session.query(EpubMetadata).filter(
+        EpubMetadata.authors.ilike(f"%{normalized_author_name}%")
+    ).all()
+
+    if not author_query:
+        # Return a 404 if no books are found for the author
+        return jsonify({"error": f"No books found for author: {author_name}"}), 404
+
+    # Format results into a JSON response
+    books = [{
+        "id": book.id,
+        "title": book.title,
+        "authors": book.authors.split(", "),
+        "series": book.series,
+        "seriesindex": book.seriesindex,
+        "coverUrl": f"/api/covers/{book.identifier}",
+        "relative_path": book.relative_path,
+        "identifier": book.identifier,
+    } for book in author_query]
+
+    return jsonify({
+        "author": author_name,
+        "books": books,
+        "total_books": len(books)
+    })
+
+@app.route('/api/books/<string:book_identifier>', methods=['GET'])
+def get_book_details_by_identifier(book_identifier):
+    """
+    Endpoint to fetch detailed metadata for a specific book using its identifier.
+    """
+    session = get_session()
+    # Query the book by its unique identifier
+    book_record = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
+
+    if not book_record:
+        # Return 404 if no book is found with the given identifier
+        return jsonify({"error": f"No book found with identifier {book_identifier}"}), 404
+
+    # Construct and return the JSON response
+    book_details = {
+        "id": book_record.id,  # Autoincrement ID, included for reference
+        "identifier": book_record.identifier,  # Unique book identifier
+        "title": book_record.title,
+        "authors": book_record.authors.split(", ") if book_record.authors else None,  # Split authors into a list
+        "series": book_record.series,
+        "seriesindex": book_record.seriesindex,
+        "coverUrl": f"/api/covers/{book_record.identifier}",  # URL for cover image
+        "epubUrl": config.BASE_URL.rstrip("/") + url_for("stream", book_identifier=book_record.identifier),  # URL for downloading/streaming the ePub
+        "progress": book_record.progress,  # Optional: Reading progress in ePub CFI format
+    }
+
+    return jsonify(book_details), 200
+
+@app.route('/api/books/<string:book_identifier>/progress', methods=['PUT'])
+def update_progress_by_identifier(book_identifier):
+    """
+    Update reading progress (e.g., ePub CFI format) for a specific book by identifier.
+    """
+    session = get_session()
+    book_record = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
+
+    if not book_record:
+        return jsonify({"error": f"No book found with identifier {book_identifier}"}), 404
+
+    # Extract the progress value (ePub CFI) from the request payload
+    progress = request.json.get("progress")
+    if not progress:
+        return jsonify({"error": "Missing 'progress' field in request"}), 400
+
+    # Update progress and save to database
+    book_record.progress = progress
+    session.commit()
+
+    return jsonify({"message": "Progress updated successfully"}), 200
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_react_app(path):
+    """
+    Serve the React app's index.html for all non-API routes.
+    React will take over routing for SPA functionality.
+    """
+    static_folder = os.path.join(app.root_path, "../frontend/dist")
+
+    if path != "" and os.path.exists(os.path.join(static_folder, path)):
+        # Serve the requested file if it exists (e.g., JS, CSS, images)
+        return send_from_directory(static_folder, path)
+    else:
+        # Serve React's index.html for unmatched paths
+        return send_from_directory(static_folder, "index.html")
 
 if __name__ == '__main__':
     app.run(debug=True)
