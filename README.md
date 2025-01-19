@@ -1,3 +1,15 @@
+## NOTE
+The BookHaven application is still very much under development.
+
+While the backend has mostly reached feature-parity (for now) the frontend is still very out of date as I was focusing primarily on the backend.
+
+My plan going forward is to start focusing on the frontend, but as a result of all of the changes done to the backend, this README is very much out of date,
+and will likely result in failed deployments if used in its current state.
+
+The README will be updated, but likely only once the frontend has reached feature-parity with the backend.
+
+The same goes for the compose and .env example files.
+
 # BookHaven
 ## Table of Contents
 1. [What the Application Does]()
@@ -9,8 +21,6 @@
 
 4. [Building the Application]()
 
-
-## NOTE: README NEEDS UPDATING
 
 ## What the Application Does
 This web application allows users to read eBooks in the EPUB format directly in their browser. Designed for convenience and accessibility, it features a responsive interface optimized for both desktop and mobile use. Users can browse their eBook collection, read books with adjustable font sizes, and pick up where they left off thanks to automatic progress saving. Additionally, the app allows users to download eBooks directly onto their devices.  
