@@ -9,7 +9,7 @@ from functions.utils import hash_password, check_pw_complexity, encrypt_totp_sec
 from functions.extensions import limiter
 from models.users import Users
 
-users_bp = Blueprint('users', __name__)
+users_bp = Blueprint('users', __name__, url_prefix='/api')
 
 @users_bp.route('/user/change-password', methods=['PATCH'])
 @login_required
