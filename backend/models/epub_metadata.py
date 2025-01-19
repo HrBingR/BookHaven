@@ -1,8 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, LargeBinary
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Float, LargeBinary, Index
 from sqlalchemy.dialects.mysql import LONGBLOB
-
-Base = declarative_base()
+from models.base import Base
 
 class EpubMetadata(Base):
     __tablename__ = 'epub_metadata'
@@ -17,3 +15,7 @@ class EpubMetadata(Base):
     cover_image_data = Column(LargeBinary().with_variant(LONGBLOB, 'mysql'))
     cover_media_type = Column(String(255))
     progress = Column(String(255), nullable=True)
+
+    __table_args__ = (
+        Index('book_identifier', 'identifier', unique=True),
+    )
