@@ -1,24 +1,33 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.epub_metadata import Base
 from config.config import config
 
-# Dynamically construct the database URL
-DATABASE_URL = config.get_database_url()
-
-engine = create_engine(DATABASE_URL)
-
-
-def init_db():
+def get_database_url():
     """
-    Initializes the database by creating necessary tables.
+    Construct the SQLAlchemy database URL based on the configuration.
     """
-    Base.metadata.create_all(engine)
+    if config.DB_TYPE == 'test':
+        return "sqlite:///tests/test.db"
+    elif config.DB_TYPE == 'mysql':
+        # MySQL URL: mysql+pymysql://username:password@host[:port]/dbname
+        return f"mysql+pymysql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT or 3306}/{config.DB_NAME}"
+    elif config.DB_TYPE == 'postgres':
+        # Postgres URL: postgresql://username:password@host[:port]/dbname
+        return f"postgresql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT or 5432}/{config.DB_NAME}"
+    elif config.DB_TYPE == 'sqlite':
+        # Use SQLite's specific URL format (file-based)
+        return f"sqlite:///{config.DB_NAME}.db"
+    else:
+        raise ValueError(f"Unsupported DB_TYPE: {config.DB_TYPE}")
 
+def get_engine():
+    database_url = get_database_url()
+    return create_engine(database_url)
 
 def get_session():
     """
     Provides a new database session (connection).
     """
+    engine = get_engine()
     Session = sessionmaker(bind=engine)
     return Session()
