@@ -1,5 +1,6 @@
 backend/venv
 backend/.env
+backend/apply_env.sh
 **/__pycache__
 **/*.pyc
 **/*.pyo
