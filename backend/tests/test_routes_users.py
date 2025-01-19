@@ -1,6 +1,6 @@
 def test_change_password(client, db_session, headers_other_user3):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user3,
         json={
             "old_password": "P@ssw0rd",
@@ -13,7 +13,7 @@ def test_change_password(client, db_session, headers_other_user3):
 
 def test_change_password_weak(client, db_session, headers_other_user3):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user3,
         json={
             "old_password": "P@ssw0rd",
@@ -26,7 +26,7 @@ def test_change_password_weak(client, db_session, headers_other_user3):
 
 def test_change_password_same(client, db_session, headers_other_user3):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user3,
         json={
             "old_password": "P@ssw0rd1",
@@ -39,7 +39,7 @@ def test_change_password_same(client, db_session, headers_other_user3):
 
 def test_change_password_missing_fields(client, db_session, headers_other_user2):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user2,
         json={
             "old_password": "P@ssw0rd1"
@@ -51,7 +51,7 @@ def test_change_password_missing_fields(client, db_session, headers_other_user2)
 
 def test_change_password_blank_fields(client, db_session, headers_other_user2):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user2,
         json={
             "old_password": "",
@@ -64,7 +64,7 @@ def test_change_password_blank_fields(client, db_session, headers_other_user2):
 
 def test_change_password_no_data(client, db_session, headers_other_user2):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user2
     )
 
@@ -73,7 +73,7 @@ def test_change_password_no_data(client, db_session, headers_other_user2):
 
 def test_change_password_wrong(client, db_session, headers_other_user3):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_other_user3,
         json={
             "old_password": "hahahaha",
@@ -86,7 +86,7 @@ def test_change_password_wrong(client, db_session, headers_other_user3):
 
 def test_change_password_invalid_user(client, db_session, headers_invalid_user):
     response = client.patch(
-        "/user/change-password",
+        "/api/user/change-password",
         headers=headers_invalid_user,
         json={
             "old_password": "P@ssw0rd1",
@@ -96,6 +96,19 @@ def test_change_password_invalid_user(client, db_session, headers_invalid_user):
 
     assert response.status_code == 401
     assert response.json["error"] == "Unauthenticated access is not allowed"
+
+def test_change_password_oidc(client, db_session, headers_other_user2):
+    response = client.patch(
+        "/api/user/change-password",
+        headers=headers_other_user2,
+        json={
+            "old_password": "P@ssw0rd1",
+            "new_password": "P@ssw0rd12"
+        }
+    )
+
+    assert response.status_code == 400
+    assert response.json["error"] == "Unable to change your password while connected to OIDC. Please revert to a local account to change your password."
 
 def test_change_password_exceptions(client, headers):
     """
@@ -114,7 +127,7 @@ def test_change_password_exceptions(client, headers):
     with patch("routes.users.get_session", mock_get_session):
         # Send a GET request to the /api/admin/users endpoint
         response = client.patch(
-            "/user/change-password",
+            "/api/user/change-password",
             headers=headers,
             json={
                 "old_password": "P@ssw0rd1",
@@ -151,7 +164,7 @@ def test_change_password_sql_alchemy_error(client, headers):
     with patch("routes.users.get_session", mock_get_session):
         # Send a GET request to the /api/admin/users endpoint
         response = client.patch(
-            "/user/change-password",
+            "/api/user/change-password",
             headers=headers,
             json={
                 "old_password": "P@ssw0rd1",
@@ -193,7 +206,7 @@ def test_enable_mfa_other_user2(app, client, db_session):
 
         # Step 3: Call `enable_mfa` endpoint with the login token
         headers = {"Authorization": f"Bearer {login_token}"}
-        enable_mfa_response = client.post('/user/enable-mfa', headers=headers)
+        enable_mfa_response = client.post('/api/user/enable-mfa', headers=headers)
 
         # Step 4: Validate the response for successful MFA enablement
         assert enable_mfa_response.status_code == 200
@@ -209,14 +222,24 @@ def test_enable_mfa_other_user2(app, client, db_session):
         assert other_user2.mfa_secret is not None
 
         # Step 6: Make sure the user cannot enable MFA again
-        duplicate_mfa_response = client.post('/user/enable-mfa', headers=headers)
+        duplicate_mfa_response = client.post('/api/user/enable-mfa', headers=headers)
         assert duplicate_mfa_response.status_code == 400
         assert duplicate_mfa_response.json["error"] == "User already has MFA enabled."
 
         # Step 7: Test unauthenticated access
-        unauthenticated_response = client.post('/user/enable-mfa')
+        unauthenticated_response = client.post('/api/user/enable-mfa')
         assert unauthenticated_response.status_code == 401
         assert unauthenticated_response.json["error"] == "Unauthenticated access is not allowed"
+
+        other_user2.auth_type = "oidc"
+        other_user2.mfa_enabled = False
+        other_user2.mfa_secret = None
+        db_session.commit()
+
+        another_mfa_response = client.post('/api/user/enable-mfa', headers=headers)
+        assert another_mfa_response.status_code == 400
+        assert another_mfa_response.json["error"] == "Cannot enable MFA with OIDC auth type"
+
 
 def test_enable_mfa_exceptions(client, headers):
     """
@@ -235,7 +258,7 @@ def test_enable_mfa_exceptions(client, headers):
     with patch("routes.users.get_session", mock_get_session):
         # Send a GET request to the /api/admin/users endpoint
         response = client.post(
-            "/user/enable-mfa",
+            "/api/user/enable-mfa",
             headers=headers
         )
         # Ensure the response is a 500 error
