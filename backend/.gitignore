@@ -2,3 +2,6 @@
 .env
 epub_library.db
 venv
+tests/test.db
+/tests/cov.html/
+apply_config.sh
