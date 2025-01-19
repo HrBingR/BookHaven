@@ -1,46 +1,76 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from a .env file, if it exists
 load_dotenv()
 
+def str_to_bool(value):
+    if isinstance(value, bool):
+        return value
+    if not value:
+        return False
+    if isinstance(value, int):
+        if value == 1:
+            return True
+    if isinstance(value, str):
+        value = value.lower()
+        if value in ('true', 'yes', 't', 'y', '1'):
+            return True
+        if value in ('false', 'no', 'f', 'n', '0'):
+            return False
+    return False
+
+# Load environment variables from a .env file, if it exists
+
 class Config:
-    # Provide a default value for BASE_DIRECTORY
-    BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
-    BASE_URL = os.getenv('BASE_URL')
-    if not BASE_URL:
-        raise ValueError(
-            "Missing required BASE_URL in environment variables."
-        )
+    def __init__(self):
+        self.ENVIRONMENT = "production"
+        self.BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
+        self.BASE_URL = os.getenv('BASE_URL', "").strip()
+        self.SECRET_KEY = os.getenv('SECRET_KEY', "").strip()
+        self.ADMIN_PASS = os.getenv('ADMIN_PASS')
+        self.ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')
+        self.ADMIN_RESET = str_to_bool(os.getenv('ADMIN_RESET', "false"))
+        self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', "false"))
+        self.ALLOW_UNAUTHENTICATED = str_to_bool(os.getenv('ALLOW_UNAUTHENTICATED', "false"))
 
-    valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-    if LOG_LEVEL not in valid_levels:
-        print(f"Invalid log level '{LOG_LEVEL}', defaulting to INFO")
-        LOG_LEVEL = "INFO"
+        self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
+        self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
+        self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
 
-    DB_TYPE = os.getenv('DB_TYPE', 'sqlite').lower()  # Default to SQLite
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = os.getenv('DB_PORT')  # Optional; fallback to DB_TYPE defaults
-    DB_NAME = os.getenv('DB_NAME', 'epub_library')  # Default DB name
-    DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', None)
+        self.REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+        self.REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+        self.REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', "").strip()
+        self.REDIS_LIMITER_DB = os.getenv('REDIS_LIMITER_DB', 0)
+        self.REDIS_SCHEDULER_DB = os.getenv('REDIS_SCHEDULER_DB', 5)
 
-    @staticmethod
-    def get_database_url():
-        """
-        Construct the SQLAlchemy database URL based on the configuration.
-        """
-        if Config.DB_TYPE == 'sqlite':
-            # Use SQLite's specific URL format (file-based)
-            return f"sqlite:///{Config.DB_NAME}.db"
-        elif Config.DB_TYPE == 'mysql':
-            # MySQL URL: mysql+pymysql://username:password@host[:port]/dbname
-            return f"mysql+pymysql://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT or 3306}/{Config.DB_NAME}"
-        elif Config.DB_TYPE == 'postgres':
-            # Postgres URL: postgresql://username:password@host[:port]/dbname
-            return f"postgresql://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT or 5432}/{Config.DB_NAME}"
-        else:
-            raise ValueError(f"Unsupported DB_TYPE: {Config.DB_TYPE}")
+        self.RATE_LIMITER_ENABLED = str_to_bool(os.getenv('RATE_LIMITER_ENABLED', True))
+        self.SCHEDULER_ENABLED = str_to_bool(os.getenv('SCHEDULER_ENABLED', True))
+
+        self.PERIODIC_SCAN_INTERVAL = os.getenv('PERIODIC_SCAN_INTERVAL', 10)
+
+        self.DB_TYPE = os.getenv('DB_TYPE', 'sqlite').lower()
+        self.DB_HOST = os.getenv('DB_HOST', 'localhost')
+        self.DB_PORT = os.getenv('DB_PORT')
+        self.DB_NAME = os.getenv('DB_NAME', 'epub_library')
+        self.DB_USER = os.getenv('DB_USER', 'root')
+        self.DB_PASSWORD = os.getenv('DB_PASSWORD', None)
+
+    @property
+    def RATE_LIMITER_URI(self):
+        if not self.REDIS_PASSWORD:
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LIMITER_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LIMITER_DB}"
+
+    @property
+    def CELERY_BROKER_URL(self):
+        if not self.REDIS_PASSWORD:
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
+
+    @property
+    def CELERY_RESULT_BACKEND(self):
+        if not self.REDIS_PASSWORD:
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
 
 config = Config()
