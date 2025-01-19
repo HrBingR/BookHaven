@@ -1,0 +1,7 @@
+[run]
+omit =
+    */__init__.py
+    */tests/*
+    */alembic/*
+    gunicorn_logging.py
+    migrations.py
