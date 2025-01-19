@@ -20,6 +20,7 @@ def admin_required(func):
         # Get the token from the Authorization header
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith("Bearer "):
+            logger.warning("Warning: User attempted Admin action without a valid auth header.")
             return jsonify({"error": "Missing or invalid Authorization header."}), 401
 
         token = auth_header.split(" ")[1]
@@ -27,10 +28,12 @@ def admin_required(func):
         # Verify the token
         decoded_token = verify_token(token)
         if not decoded_token:
+            logger.warning("Warning: User attempted Admin action with an invalid or expired token.")
             return jsonify({"error": "Invalid or expired token."}), 401
 
         # Ensure the user is an admin
         if not decoded_token.get("user_is_admin", False):
+            logger.warning(f"Warning: Non-Admin UID {decoded_token.get("user_id")} attempted to access admin-function.")
             return jsonify({"error": "Forbidden. Admin access only."}), 403
 
         # Pass the decoded_token to the route function
@@ -62,9 +65,11 @@ def get_all_users():
             }
             for user in users
         ]
+        logger.info(f"Admin UID {g.user["user_id"]} successfully retrieved {len(result)} users.")
         return jsonify(result), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch users.", "details": str(e)}), 500
+        logger.exception(e)
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -91,14 +96,15 @@ def change_user_admin_status(user_id):
 
         user.is_admin = data["is_admin"]
         session.commit()
-
+        logger.info(f"Admin UID {current_user_id} successfully changed UID {user_id} admin status.")
         return jsonify({
             "success": True,
             "message": f"User admin status {'granted' if user.is_admin else 'revoked'} successfully."
         }), 200
     except Exception as e:
         session.rollback()
-        return jsonify({"error": "Failed to update user admin status.", "details": str(e)}), 500
+        logger.exception(f"Failed to change admin status: {str(e)}")
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -120,10 +126,12 @@ def reset_user_password(user_id):
             return jsonify({"error": "Cannot reset passwords for OIDC-authenticated users."}), 400
         user.password_hash = hash_password(new_password)
         session.commit()
-        return jsonify({"success": True, "new_password": new_password}), 200
+        logger.info(f"Admin UID {g.user["user_id"]} successfully reset UID {user_id} password.")
+        return jsonify({"success": True}), 200
     except Exception as e:
         session.rollback()
-        return jsonify({"error": "Failed to reset user password.", "details": str(e)}), 500
+        logger.exception(f"Failed to reset user password: {str(e)}")
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -140,11 +148,12 @@ def reset_user_mfa(user_id):
         user.mfa_enabled = False
         user.mfa_secret = None
         session.commit()
+        logger.info(f"Admin UID {g.user["user_id"]} successfully reset UID {user_id} MFA.")
         return jsonify({"message": f"MFA successfully reset for user-id {user_id}"})
     except Exception as e:
         session.rollback()
-        logger.exception(e)
-        return jsonify({"error": "Internal server error. Please try again later."}), 500
+        logger.exception(f"Failed to reset user MFA: {str(e)}")
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -170,10 +179,12 @@ def change_email(user_id):
             return jsonify({"error": "Unlink OIDC before changing user's email address."}), 400
         user.email = new_email_address
         session.commit()
+        logger.info(f"Admin UID {g.user["user_id"]} successfully changed UID {user_id} email address.")
         return jsonify({"message": "Email address successfully updated."}), 200
     except Exception as e:
         session.rollback()
-        return jsonify({"error": "Failed to change email address.", "details": str(e)}), 500
+        logger.exception(f"Failed to update user email address: {str(e)}")
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -215,12 +226,13 @@ def register_user():
             is_admin=is_admin
         )
         session.add(new_user)
+        logger.info(f"Admin UID {g.user["user_id"]} successfully registered user {username}.")
         session.commit()
         return jsonify({"message": f"User {username} added successfully."}), 200
     except Exception as e:
         session.rollback()
-        logger.exception(f"Failed to create user: {e}")
-        return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
+        logger.exception(f"Failed to register user: {e}")
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
@@ -236,15 +248,15 @@ def delete_user(user_id):
             return jsonify({"error": "User not found."}), 404
         session.delete(user)
         session.commit()
-        logger.debug(f"User ID {user_id} deleted")
+        logger.info(f"Admin UID {g.user["user_id"]} successfully deleted UID {user_id}.")
         return jsonify({"message": "User successfully deleted."}), 200
     except SQLAlchemyError as e:
         session.rollback()
         logger.exception(f"Failed to delete user: {e}")
-        return jsonify({"error": "An unexpected database error occurred. Please try again later."}), 500
+        return jsonify({"error": "Internal database error. See logs for details."}), 500
     except Exception as e:
         session.rollback()
         logger.exception(f"Failed to delete user: {e}")
-        return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
+        return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
