@@ -38,8 +38,7 @@ def test_get_all_users_handles_exception(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "Failed to fetch users.", "Unexpected error message in the response."
-        assert data["details"] == "Simulated database failure", "Unexpected exception message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -187,8 +186,7 @@ def test_change_user_admin_status_exceptions(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "Failed to update user admin status.", "Unexpected error message in the response."
-        assert data["details"] == "Simulated database failure", "Unexpected exception message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -221,7 +219,6 @@ def test_reset_user_password_generated(client, db_session, headers):
     )
     assert response.status_code == 200
     assert response.json["success"] is True
-    assert response.json["new_password"] is not None
 
 def test_reset_user_password_oidc(client, db_session, headers):
     """
@@ -272,8 +269,7 @@ def test_reset_user_password_exceptions(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "Failed to reset user password.", "Unexpected error message in the response."
-        assert data["details"] == "Simulated database failure", "Unexpected exception message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -403,7 +399,7 @@ def test_register_user_exceptions(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "An unexpected error occurred. Please try again later.", "Unexpected error message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -467,7 +463,7 @@ def test_delete_user_exceptions(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "An unexpected error occurred. Please try again later.", "Unexpected error message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -505,7 +501,7 @@ def test_delete_user_sql_alchemy_error(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "An unexpected database error occurred. Please try again later.", "Unexpected error message in the response."
+        assert data["error"] == "Internal database error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
@@ -587,7 +583,80 @@ def test_change_email_exceptions(client, headers):
         data = json.loads(response.data)
 
         # Verify the error message and details in the response
-        assert data["error"] == "Failed to change email address.", "Unexpected error message in the response."
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
+
+    # Ensure session was closed even after failure
+    mock_session.close.assert_called_once()
+
+def test_reset_user_mfa(client, headers, db_session, logs):
+    from bcrypt import hashpw, gensalt
+    hashed_password = hashpw("P@ssw0rd".encode('utf-8'), gensalt()).decode('utf-8')
+    other_user20 = Users(
+        id=101,
+        username="other20",
+        email="other20@example.com",
+        password_hash=hashed_password,
+        auth_type="local",
+        is_admin=False,
+        mfa_enabled=True,
+        mfa_secret="gAAAAABnjOwcZtzHFzIsOj2PRs7tyeJCeeZWOwrC8Nyp1DpVqMN1Lx-BuDD3r1UVVsn9dd0LijbpCDqBQSNyPAp1i7wWyVQp_A=="
+    )
+    db_session.add(other_user20)
+    db_session.commit()
+    response = client.post(
+        "/api/admin/users/101/reset-mfa",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert "MFA successfully reset" in response.json["message"]
+    assert "successfully reset UID" in logs.info
+    db_session.delete(other_user20)
+    db_session.commit()
+
+def test_reset_user_mfa_user_not_exist(client, headers, db_session):
+    response = client.post(
+        "/api/admin/users/101/reset-mfa",
+        headers=headers,
+    )
+    assert response.status_code == 404
+    assert "User not found" in response.json["error"]
+
+def test_reset_user_mfa_oidc(client, headers, db_session):
+    response = client.post(
+        "/api/admin/users/51/reset-mfa",
+        headers=headers,
+    )
+    assert response.status_code == 400
+    assert "Cannot reset MFA for OIDC-authenticated users" in response.json["error"]
+
+def test_reset_user_mfa_exceptions(client, headers):
+    """
+    Test the `reset_user_password` endpoint to ensure it handles exceptions and returns
+    the appropriate error message and status code.
+    """
+    # Mock the session and force it to raise an exception
+    from unittest.mock import patch, MagicMock
+    from flask import json
+
+    mock_session = MagicMock()
+    mock_session.query.side_effect = Exception("Simulated database failure")
+    mock_get_session = MagicMock(return_value=mock_session)
+
+    # Patch `get_session` to use the mocked session
+    with patch("routes.admin.get_session", mock_get_session):
+        # Send a GET request to the /api/admin/users endpoint
+        response = client.post(
+            "/api/admin/users/54/reset-mfa",
+            headers=headers
+        )
+        # Ensure the response is a 500 error
+        assert response.status_code == 500, "Expected a 500 Internal Server Error response."
+
+        # Parse the JSON payload
+        data = json.loads(response.data)
+
+        # Verify the error message and details in the response
+        assert data["error"] == "Internal server error. See logs for details.", "Unexpected error message in the response."
 
     # Ensure session was closed even after failure
     mock_session.close.assert_called_once()
