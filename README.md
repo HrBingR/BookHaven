@@ -1,4 +1,4 @@
-# EPUB Reader Web Application
+# BookHaven
 ## Table of Contents
 1. [What the Application Does]()
 2. [Features]()
@@ -8,6 +8,9 @@
     - [Development]()
 
 4. [Building the Application]()
+
+
+## NOTE: README NEEDS UPDATING
 
 ## What the Application Does
 This web application allows users to read eBooks in the EPUB format directly in their browser. Designed for convenience and accessibility, it features a responsive interface optimized for both desktop and mobile use. Users can browse their eBook collection, read books with adjustable font sizes, and pick up where they left off thanks to automatic progress saving. Additionally, the app allows users to download eBooks directly onto their devices.  
