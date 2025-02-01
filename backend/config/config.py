@@ -23,6 +23,9 @@ def str_to_bool(value):
 
 class Config:
     def __init__(self):
+
+        self.UI_BASE_COLOR = os.getenv("UI_BASE_COLOR", "green")
+
         self.ENVIRONMENT = "production"
         self.BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
         self.BASE_URL = os.getenv('BASE_URL', "").strip()
@@ -30,12 +33,12 @@ class Config:
         self.ADMIN_PASS = os.getenv('ADMIN_PASS')
         self.ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')
         self.ADMIN_RESET = str_to_bool(os.getenv('ADMIN_RESET', "false"))
-        self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', "false"))
+        # self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', "false"))
         self.ALLOW_UNAUTHENTICATED = str_to_bool(os.getenv('ALLOW_UNAUTHENTICATED', "false"))
 
-        self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
-        self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
-        self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
+        # self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
+        # self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
+        # self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
 
         self.REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         self.REDIS_PORT = os.getenv('REDIS_PORT', '6379')
