@@ -10,6 +10,14 @@ services:
     volumes:
       - /path/to/mysql/storage:/var/lib/mysql
 
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - epub-reader-net
+
   epub-reader:
     container_name: epub-reader
     image: epub-reader:latest
