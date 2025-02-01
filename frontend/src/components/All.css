@@ -92,22 +92,22 @@
   justify-items: center; /* Center-align buttons/links */
 }
 
-   .series-title {
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     gap: 10px;
-     font-size: 1.5rem;
-     max-width: 800px;
-     margin: 1rem auto;
-   }
-   .series-title::before,
-   .series-title::after {
-     content: "----------";
-     flex: 1; /* Stretches the dashes */
-     text-align: center;
-     color: #888;
-   }
+.series-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  max-width: 800px;
+  margin: 1rem auto;
+}
+.series-title::before,
+.series-title::after {
+  content: "----------";
+  flex: 1; /* Stretches the dashes */
+  text-align: center;
+  color: #888;
+}
 .full-width {
   display: flex;
   justify-content: center; /* Center content inside */
@@ -124,33 +124,33 @@
 }
 
 .single-book-row {
-    justify-content: center; /* Center the book in the row */
-    display: flex; /* Ensure row alignment works correctly */
+  justify-content: center; /* Center the book in the row */
+  display: flex; /* Ensure row alignment works correctly */
 }
 
 .single-book-col {
-    flex: 0 1 100%; /* Ensure the column takes up the full width */
-    max-width: 100%; /* Override default max-width to span fully */
-    text-align: center; /* Ensure the content is centered */
+  flex: 0 1 100%; /* Ensure the column takes up the full width */
+  max-width: 100%; /* Override default max-width to span fully */
+  text-align: center; /* Ensure the content is centered */
 }
 
 .container {
-    width: 100%; /* Allow container to occupy the full width */
-    max-width: 100%; /* Remove unnecessary width restrictions */
-    margin: 0 auto; /* Center it if maximum width is applied elsewhere */
+  width: 100%; /* Allow container to occupy the full width */
+  max-width: 100%; /* Remove unnecessary width restrictions */
+  margin: 0 auto; /* Center it if maximum width is applied elsewhere */
 }
 
 .placeholder-col {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .placeholder-div {
-    height: 0; /* No visible content */
-    width: 200px; /* Match full-width of a grid cell */
-    background-color: transparent; /* Invisible */
-    border: none;
+  height: 0; /* No visible content */
+  width: 200px; /* Match full-width of a grid cell */
+  background-color: transparent; /* Invisible */
+  border: none;
 }
 
 /* ==========================
@@ -166,7 +166,7 @@ body {
 /* General Container */
 .authors-container {
   max-width: 1500px;
-  /*margin: auto;*/
+  min-height: 100vh;
   padding: 20px;
   margin-top: 0px;
 }
@@ -239,20 +239,20 @@ button:focus {
   transition: all 0.2s ease-in-out;
 }
 
-.letter-button.active {
-  background-color: #007bff; /* Blue */
-  color: white;
-}
+/*.letter-button.active {*/
+/*  background-color: #007bff; !* Blue *!*/
+/*  color: white;*/
+/*}*/
 
-.letter-button.active:hover {
-  background-color: #0056b3; /* Darker blue */
-}
+/*.letter-button.active:hover {*/
+/*  background-color: #0056b3; !* Darker blue *!*/
+/*}*/
 
-.letter-button.disabled {
-  background-color: #d6d6d6; /* Light gray */
-  color: #888888; /* Muted gray */
-  cursor: not-allowed;
-}
+/*.letter-button.disabled {*/
+/*  background-color: #d6d6d6; !* Light gray *!*/
+/*  color: #888888; !* Muted gray *!*/
+/*  cursor: not-allowed;*/
+/*}*/
 
 .link-button {
   display: inline-block; /* Allow inline-block for proper sizing */
@@ -287,62 +287,63 @@ button:focus {
 
 
 .card-container {
-    height: 550px !important; /* Uniform height for all cards */
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between; /* Distribute content evenly */
-    align-items: center; /* Center content */
-    text-align: center; /* Align text uniformly */
-    overflow: hidden; /* Prevent overflowing content */
-    padding-top: 10px;
-    padding-bottom: 10px;
+  /*height: 550px !important; !* Uniform height for all cards *!*/
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between; /* Distribute content evenly */
+  align-items: center; /* Center content */
+  text-align: center; /* Align text uniformly */
+  overflow: hidden; /* Prevent overflowing content */
+  padding-top: 10px;
+  padding-bottom: 10px;
+  flex-basis: 100%;
 }
 
 .book-cover {
-    max-height: 300px; /* Limit the height for book covers */
-    max-width: 100%; /* Ensure image fits within the card width */
-    object-fit: contain; /* Maintain aspect ratio, avoids distortion */
+  max-height: 300px; /* Limit the height for book covers */
+  max-width: 100%; /* Ensure image fits within the card width */
+  object-fit: contain; /* Maintain aspect ratio, avoids distortion */
 }
 
 .book-cover:hover {
   cursor: pointer;
   opacity: 0.9; /* Slightly dim the image on hover */
-    scale: 1.05;
+  scale: 1.05;
   transition: opacity 0.2s ease-in-out, scale 0.2s ease-in-out;
 }
 
 .card-footer {
-    margin-top: auto; /* Push the button to the bottom of the card body */
-    border-top: none !important;
-    background-color: #FFF !important;
-    padding: 0px !important;
+  margin-top: auto; /* Push the button to the bottom of the card body */
+  border-top: none !important;
+  background-color: #FFF !important;
+  padding: 0px !important;
   flex-direction: row;
   display:flex;
 }
 .card-text {
-    margin-bottom: 2px !important;
+  margin-bottom: 2px !important;
 }
 
 .header-container {
-    display: flex;
-    justify-content: space-between; /* Space between the elements */
-    align-items: center; /* Vertically align all elements */
-    position: relative; /* Allow contained positioning */
-    margin-bottom: 16px; /* Space below the header */
+  display: flex;
+  justify-content: space-between; /* Space between the elements */
+  align-items: center; /* Vertically align all elements */
+  position: relative; /* Allow contained positioning */
+  margin-bottom: 16px; /* Space below the header */
   margin-top: 30px;
 }
 
 /* Spacer and Back Button */
 .header-container .spacer,
 .header-container .back-button {
-    width: 150px; /* Fixed width ensures equal space for spacer and button */
-    flex-shrink: 0; /* Prevent uneven shrinking */
+  width: 150px; /* Fixed width ensures equal space for spacer and button */
+  flex-shrink: 0; /* Prevent uneven shrinking */
 }
 
 .header-container .title {
-    flex-grow: 1; /* Title takes up remaining space */
-    text-align: center; /* Center the text */
-    margin: 0; /* Remove default browser margins */
+  flex-grow: 1; /* Title takes up remaining space */
+  text-align: center; /* Center the text */
+  margin: 0; /* Remove default browser margins */
 }
 
 .reader-container {
@@ -419,17 +420,22 @@ button:focus {
 }
 
 .sidebar {
-  position: fixed; /* Sidebar overlays the content, instead of pushing it */
+  position: fixed; /* Sidebar overlays the content */
   top: 0;
   left: 0;
   background: #f8f9fa;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Optional shadow for better overlay effect */
-  z-index: 999; /* Ensure it appears above main content */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add a shadow for better overlay */
+  z-index: 999; /* Ensure it layers above content */
+  transition: width 0.3s ease-in-out; /* Smooth transition */
+  overflow: hidden; /* Prevent content overflow */
+  width: 12vw;
+  height: 100vh;
 }
 
 .sidebar.closed {
-  width: 0; /* Hide sidebar when closed (state-driven) */
-  overflow: hidden; /* Prevent content overflow when hidden */
+  width: 0; /* Fully collapsed */
+  overflow: hidden; /* Prevent content visibility */
+  transition: width 0.3s ease-in-out; /* Smooth transition for toggling */
 }
 
 /* Toggle Button for Smaller Viewports */
@@ -442,6 +448,7 @@ button:focus {
 
 .wrapper-div {
   margin-top: 0px;
+  min-height: 100vh;
 }
 
 
@@ -452,6 +459,81 @@ button:focus {
 .search-bar {
   width: 93%;
   margin-right: 10px;
+}
+
+.button-spacer {
+  margin-left: 10px;
+}
+
+.chips-container {
+  display: flex;
+  gap: 10px; /* Spacing between chips */
+  flex-wrap: wrap; /* Allow chips to wrap on smaller screens */
+  margin-top: 10px;
+}
+
+.filter-chip {
+  padding: 4px 12px;
+  border: 2px ridge #007bff; /* Default border color */
+  border-radius: 16px; /* Rounded, pill-like shape */
+  color: #007bff; /* Default text color */
+  background-color: #ffffff; /* White background */
+  cursor: pointer; /* Indicate interactivity */
+  transition: all 0.2s ease-in-out;
+}
+
+.filter-chip:hover {
+  background-color: #f0f8ff; /* Light blue background on hover */
+  color: #0056b3; /* Darken text color slightly */
+  border-color: #0056b3; /* Border becomes darker blue */
+}
+
+.filter-chip.chip-active {
+  background-color: #007bff; /* Filled blue background */
+  color: white; /* White text */
+  border-color: #007bff; /* Slightly darker border */
+}
+
+.filter-chip.chip-active:hover {
+  background-color: #0056b3; /* Darker blue when active and hovered */
+  border-color: #0056b3;
+}
+
+.flex-grow-1 {
+  margin-left: 23vh
+}
+
+.dropdown-menu {
+  min-width: 0 !important;
+  border: none !important;
+}
+
+.card-column {
+  display: flex;
+}
+
+.fade-enter {
+  opacity: 0;
+  position: relative; /* Helps avoid layout shifts if you prefer */
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.modal-90w{
+  max-width: none !important;
+  width: 90vw !important;
 }
 
 /* ==========================
@@ -468,6 +550,15 @@ button:focus {
     width: 90%;
     margin-right: 10px;
   }
+  .sidebar {
+    width: 15vw;
+  }
+  .sidebar.closed {
+    width: 15vw;
+  }
+  /*.flex-grow-1 {*/
+  /*  margin-left: 0vh*/
+  /*}*/
 }
 
 @media (max-width: 1200px) {
@@ -477,6 +568,12 @@ button:focus {
   .search-bar {
     width: 85%;
     margin-right: 10px;
+  }
+  .sidebar {
+    width: 19vw;
+  }
+  .sidebar.closed {
+    width: 19vw;
   }
 }
 
@@ -488,7 +585,7 @@ button:focus {
   }
 
   button {
-    width: 100%; /* Full-width buttons */
+    /*width: 100%; !* Full-width buttons *!*/
     margin-bottom: 0.5rem; /* Spacing for stacked buttons */
   }
 
@@ -498,6 +595,12 @@ button:focus {
   .reader-container {
     width: 75vw;
   }
+  .sidebar {
+    width: 23vw;
+  }
+  .sidebar.closed {
+    width: 23vw;
+  }
 }
 
 @media (max-width: 780px) {
@@ -506,8 +609,22 @@ button:focus {
     flex: 0 0 calc(49% - 10px); /* Default column size */
     max-width: calc(49% - 10px); /* Limit width so it stays within bounds */
   }
+  .flex-grow-1 {
+    margin-left: 0vh;
+  }
   .sidebar {
-    width: 0; /* Hide the sidebar by default */
+    width: 0; /* Default to closed on mobile */
+    position: fixed;
+    z-index: 999; /* Overlay content */
+    transition: width 0.3s ease-in-out; /* Smooth animations */
+  }
+
+  .sidebar.open {
+    width: 30vw; /* Expanded sidebar width on mobile */
+  }
+
+  .sidebar.closed {
+    width: 0; /* Fully collapsed */
   }
 
   .toggle-sidebar-btn {
@@ -526,6 +643,9 @@ button:focus {
     display: flex;
     flex-direction: column;
   }
+  .input-group > .form-control {
+    width: 100% !important;
+  }
   .button-spacer {
     margin-top: 10px;
   }
@@ -539,13 +659,16 @@ button:focus {
   .collapse-button {
     margin-top: 10px;
   }
-   .series-title::before,
-   .series-title::after {
-     content: "--";
-     flex: 1; /* Stretches the dashes */
-     text-align: center;
-     color: #888;
-   }
+  .series-title::before,
+  .series-title::after {
+    content: "--";
+    flex: 1; /* Stretches the dashes */
+    text-align: center;
+    color: #888;
+  }
+  .chips-container {
+    justify-content: center; /* Center-align chips on smaller screens */
+  }
 }
 
 @media (max-width: 540px) {
