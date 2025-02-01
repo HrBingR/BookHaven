@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, send_from_directory, current_app
+from flask import Blueprint, send_from_directory, current_app, jsonify
+from config.config import config
 
 react_bp = Blueprint("react", __name__, static_folder="../frontend/dist")
 
@@ -19,3 +20,22 @@ def serve_react_app(path):
     else:
         # Serve React's index.html for unmatched paths
         return send_from_directory(static_folder, "index.html")
+
+@react_bp.route("/api/react-init", methods=["GET"])
+def react_frontend_config():
+
+    color_variants = {
+    'green': 'success',
+    'blue': 'primary',
+    'red': 'danger',
+    'yellow': 'warning',
+    'white': 'light',
+    'black': 'dark'
+    }
+
+    color = color_variants.get(config.UI_BASE_COLOR, "success")
+
+    react_config = {
+        "UI_BASE_COLOR": color
+    }
+    return jsonify(react_config), 200
