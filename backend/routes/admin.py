@@ -60,8 +60,8 @@ def get_all_users():
                 "email": user.email,
                 "is_admin": user.is_admin,
                 "auth_type": user.auth_type,
-                "created_at": user.created_at,
-                "last_login": user.last_login,
+                "created_at": user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S'),
             }
             for user in users
         ]
@@ -114,9 +114,8 @@ def reset_user_password(user_id):
     """Reset a user's password (local-auth users only)"""
     data = request.get_json(silent=True)
     if data is None or "new_password" not in data:
-        new_password = generate_random_password()
-    else:
-        new_password = data.get('new_password', None)
+        return jsonify({"error": "No password submitted"})
+    new_password = data.get('new_password', None)
     session = get_session()
     try:
         user = session.query(Users).filter_by(id=user_id).first()
@@ -145,6 +144,8 @@ def reset_user_mfa(user_id):
             return jsonify({"error": "User not found."}), 404
         if user.auth_type != "local":
             return jsonify({"error": "Cannot reset MFA for OIDC-authenticated users."}), 400
+        if not user.mfa_enabled:
+            return jsonify({"error": "User does not have MFA enabled."}), 400
         user.mfa_enabled = False
         user.mfa_secret = None
         session.commit()
@@ -242,6 +243,9 @@ def delete_user(user_id):
     if user_id <= 0:
         return jsonify({"error": "Invalid user ID."}), 400
     session = get_session()
+    current_user_id = g.user["user_id"]
+    if current_user_id == user_id:
+        return jsonify({"error": "You cannot delete your own account."}), 400
     try:
         user = session.query(Users).filter(Users.id == user_id).first()
         if not user:
