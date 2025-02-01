@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ReactReader } from "react-reader";
-import axios from "axios";
+import apiClient from '../utilities/apiClient';
 import "./All.css";
 
 const Reader: React.FC = () => {
@@ -14,8 +14,8 @@ const Reader: React.FC = () => {
     useEffect(() => {
         const fetchBookDetails = async () => {
             try {
-                const bookResponse = await axios.get(`/api/books/${identifier}`);
-                const streamResponse = await axios.get(`/stream/${identifier}`);
+                const bookResponse = await apiClient.get(`/api/books/${identifier}`);
+                const streamResponse = await apiClient.get(`/stream/${identifier}`);
                 const { progress } = bookResponse.data;
                 const { url } = streamResponse.data;
                 console.log(url);
@@ -32,7 +32,7 @@ const Reader: React.FC = () => {
 
     const saveProgress = async (cfi: string) => {
         try {
-            await axios.put(`/api/books/${identifier}/progress`, { progress: cfi });
+            await apiClient.put(`/api/books/${identifier}/progress_state`, { progress: cfi });
         } catch (err) {
             console.error("Error saving reading progress:", err);
         }
