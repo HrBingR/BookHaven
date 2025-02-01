@@ -24,7 +24,7 @@ def change_password(token_state):
     required_fields = ["new_password", "old_password"]
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
-        return jsonify({"error": f"{', '.join(missing_fields).capitalize()} field(s) are required."}), 400
+        return jsonify({"error": f"{', '.join(missing_fields).capitalize().split("_")} field(s) required."}), 400
     new_password = data.get("new_password")
     old_password = data.get("old_password")
     if not new_password.strip() or not old_password.strip():
@@ -59,29 +59,28 @@ def change_password(token_state):
 
 @users_bp.route('/user/enable-mfa', methods=['POST'])
 @login_required
-@limiter.limit('2 per second')
+# @limiter.limit('2 per second')
 def enable_mfa(token_state):
-    # IMPLEMENT HMAC OTP AFTER EMAIL SETUP
+    logger.debug("Attempting to enable MFA")
     if token_state == "no_token":
         return jsonify({"error": "Unauthenticated access is not allowed"}), 401
     user_id = token_state["user_id"]
     session = get_session()
     try:
         user = session.query(Users).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
         if user.auth_type == "oidc":
-            return jsonify({"error" : "Cannot enable MFA with OIDC auth type"}), 400
-        if user.mfa_enabled or user.mfa_secret is not None:
-            return jsonify({"error": "User already has MFA enabled."}), 400
+            return jsonify({"error": "Cannot enable MFA with OIDC auth type"}), 400
+        if user.mfa_enabled:
+            return jsonify({"error": "MFA is already enabled"}), 400
         mfa_secret = pyotp.random_base32()
         encrypted_mfa_secret = encrypt_totp_secret(mfa_secret)
-        user.mfa_enabled = True
         user.mfa_secret = encrypted_mfa_secret
         session.commit()
-        user_username = user.username
-        user_email = user.email
-        user_totp_name = f"{user_username}/{user_email}"
+        user_totp_name = f"{user.username}/{user.email}"
         totp = pyotp.TOTP(mfa_secret)
-        provisioning_url = totp.provisioning_uri(name=user_totp_name,issuer_name="BookHaven")
+        provisioning_url = totp.provisioning_uri(name=user_totp_name, issuer_name="BookHaven")
         mfa_secret_split = " ".join(mfa_secret[i:i + 4] for i in range(0, len(mfa_secret), 4))
     except Exception as e:
         session.rollback()
@@ -90,11 +89,60 @@ def enable_mfa(token_state):
     finally:
         session.close()
     return jsonify({
-        "message": "MFA Successfully Enabled",
+        "message": "MFA setup initiated. Validate the OTP to complete setup.",
         "totp_provisioning_url": provisioning_url,
         "mfa_secret": mfa_secret_split
     }), 200
 
+
+@users_bp.route('/user/disable-mfa', methods=['DELETE'])
+@login_required
+@limiter.limit('2 per second')
+def disable_mfa(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    user_id = token_state["user_id"]
+    session = get_session()
+    try:
+        user = session.query(Users).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        if user.auth_type == "oidc":
+            return jsonify({"error": "Cannot disable MFA with OIDC auth type"}), 400
+        if not user.mfa_enabled:
+            return jsonify({"error": "MFA is not enabled"}), 400
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.exception(f"Error disabling MFA for user ID {user_id}: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        session.close()
+    return jsonify({"message": "MFA successfully disabled."}), 200
+
+@users_bp.route('/user/get-mfa-status', methods=['GET'])
+@login_required
+@limiter.limit('2 per second')
+def get_mfa_status(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    user_id = token_state["user_id"]
+    session = get_session()
+    try:
+        user = session.query(Users).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        if user.mfa_enabled:
+            return jsonify({"message": "true"}), 200
+        else:
+            return jsonify({"message": "false"}), 200
+    except Exception as e:
+        logger.exception(f"Error retrieving MFA status for user ID {user_id}: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        session.close()
 
 ### TO BE IMPLEMENTED AFTER EMAIL/SMTP:
 
