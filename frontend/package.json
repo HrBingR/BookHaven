@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:dev": "tsc -b && vite build --mode development-build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -20,11 +21,14 @@
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "epubjs": "^0.3.93",
+    "jwt-decode": "^4.0.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.7",
     "react-dom": "^18.3.1",
     "react-reader": "^2.0.12",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.1.1",
+    "react-transition-group": "^4.4.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
