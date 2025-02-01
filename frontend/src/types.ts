@@ -8,4 +8,6 @@
      coverUrl: string;
      relative_path: string;
      identifier: string;
+     is_finished: boolean;
+     marked_favorite: boolean;
    }
