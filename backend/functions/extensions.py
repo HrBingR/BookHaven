@@ -21,4 +21,6 @@ def setup_cors(app):
         r"/download/*": {"origins": allowed_origin},  # File download endpoints
         r"/login*": {"origins": allowed_origin},  # Authentication: login, OTP handling
         r"/api/admin/*": {"origins": allowed_origin},  # Admin-related endpoints
+        r"/validate-otp": {"origins": allowed_origin},
+        r"/scan-library": {"origins": allowed_origin}
     })
