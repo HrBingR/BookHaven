@@ -7,20 +7,23 @@ import { Book } from '../types';
 interface BooksProps {
   books: Book[];
   refreshBooks: () => void;
+  isLoggedIn: boolean;
 }
 
-const Books: React.FC<BooksProps> = ({ books, refreshBooks }) => {
+const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn }) => {
   return (
       <Row className="mt-4">
         {books.map((book) => (
             <Col
                 key={book.id}
-                sm={12} /* Full width on small devices */
-                md={6} /* Half width on medium devices */
-                lg={books.length <= 3 ? 2 : 2} /* Adjust for larger layouts */
-                className="mb-4"
+                sm={6} /* Full width on small devices */
+                md={4} /* Half width on medium devices */
+                lg={3} /* Adjust for larger layouts */
+                xl={3}
+                xxl={2}
+                className="mb-4 card-column"
             >
-              <BookCard book={book} refreshBooks={refreshBooks} />
+              <BookCard book={book} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} />
             </Col>
         ))}
         {/* Add placeholders if the number of books is less than the grid capacity */}
@@ -31,7 +34,9 @@ const Books: React.FC<BooksProps> = ({ books, refreshBooks }) => {
                     sm={12}
                     md={6}
                     lg={4}
-                    className="mb-4 placeholder-col"
+                    xl={3}
+                    xxl={2}
+                    className="mb-4 placeholder-col card-column"
                 >
                   <div className="placeholder-div"></div>
                 </Col>
