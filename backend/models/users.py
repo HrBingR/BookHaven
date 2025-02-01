@@ -18,4 +18,4 @@ class Users(Base):
     auth_type = Column(Enum('oidc', 'local'), default='local', nullable=False)
     mfa_enabled = Column(Boolean, default=False, nullable=False)
     mfa_secret = Column(String(255), nullable=True)
-    last_used_otp = Column(Integer, nullable=True)
+    last_used_otp = Column(String(8), nullable=True)
