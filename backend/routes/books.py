@@ -3,7 +3,7 @@ from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
 from functions.db import get_session
 from functions.book_management import get_book_progress, update_book_progress_state, login_required
-from config.config import config
+from config.config import config, str_to_bool
 from config.logger import logger
 books_bp = Blueprint('books', __name__)
 @books_bp.route('/api/books', methods=['GET'])
@@ -19,15 +19,17 @@ def get_books(token_state):
     query = request.args.get('query', '', type=str)
     offset = request.args.get('offset', 0, type=int)
     limit = request.args.get('limit', 18, type=int)
-    favorites_queried = 'favorites' in request.args
-    finished_queried = 'finished' in request.args
+    favorites_queried = str_to_bool(request.args.get('favorites', False))
+    logger.debug(f"Favorites queried: {favorites_queried}")
+    finished_queried = str_to_bool(request.args.get('finished', False))
+    logger.debug(f"Finished queried: {finished_queried}")
 
     session = get_session()
     try:
         books_query = session.query(EpubMetadata)
 
         # Apply favorites filter if requested
-        if favorites_queried or finished_queried:
+        if favorites_queried is True or finished_queried is True:
             # Ensure user is logged in
             if token_state == "no_token":
                 return jsonify({"error": "Unauthenticated access is not allowed"}), 401
@@ -51,11 +53,11 @@ def get_books(token_state):
                 )
             )
 
-            if favorites_queried and finished_queried:
+            if favorites_queried is True and finished_queried is True:
                 books_query = books_query_favorite.union(books_query_finished)
-            elif favorites_queried:
+            elif favorites_queried is True:
                 books_query = books_query_favorite
-            elif finished_queried:
+            elif finished_queried is True:
                 books_query = books_query_finished
 
             # Check if no favorites exist for this user
