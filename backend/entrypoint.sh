@@ -17,14 +17,14 @@ fi
 if [ "$ENABLE_HTTPS" = "true" ]; then
     if [ -f "$SSL_CERT_FILE" ] && [ -f "$SSL_KEY_FILE" ]; then
         echo "Starting $NUM_WORKERS gunicorn workers with HTTPS..."
-        gunicorn -w "$NUM_WORKERS" --certfile="$SSL_CERT_FILE" --keyfile="$SSL_KEY_FILE" --config gunicorn_logging.py -b 0.0.0.0:"$APP_PORT" main:create_app &
+        gunicorn -w "$NUM_WORKERS" --certfile="$SSL_CERT_FILE" --keyfile="$SSL_KEY_FILE" --config gunicorn_logging.py -b 0.0.0.0:"$APP_PORT" main:app &
     else
         echo "ERROR: HTTPS is enabled but the SSL_CERT_FILE or SSL_KEY_FILE is missing. Exiting..."
         exit 1
     fi
 else
     echo "Starting $NUM_WORKERS gunicorn workers without HTTPS..."
-    gunicorn -w "$NUM_WORKERS" --config gunicorn_logging.py -b 0.0.0.0:"$APP_PORT" main:create_app &
+    gunicorn -w "$NUM_WORKERS" --config gunicorn_logging.py -b 0.0.0.0:"$APP_PORT" main:app &
 fi
 
 echo "Starting Celery and Celery Beat..."
