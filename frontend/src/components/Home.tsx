@@ -1,6 +1,6 @@
 // src/components/Home.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import apiClient from '../utilities/apiClient';
 import SearchBar from './SearchBar';
 import Books from './Books';
 import { Container } from 'react-bootstrap';
@@ -42,21 +42,34 @@ const groupAndSortBooks = (books: Book[]): Book[] => {
   return sortedBooks;
 };
 
-const Home: React.FC = () => {
+const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const [books, setBooks] = useState<Book[]>([]); // Current list of books
   const [offset, setOffset] = useState<number>(0); // Offset for fetching the next books
   const [hasMore, setHasMore] = useState<boolean>(true); // Tracks whether more books are available
   const [loading, setLoading] = useState<boolean>(false); // Tracks if books are being loaded
   const [searchTerm, setSearchTerm] = useState<string>(''); // Tracks the search query
+  const [favoritesQueried, setFavoritesQueried] = useState<boolean>(false);
+  const [finishedQueried, setFinishedQueried] = useState<boolean>(false);
 
   const observerRef = useRef<IntersectionObserver | null>(null); // Reference to IntersectionObserver
   const triggerRef = useRef<HTMLDivElement | null>(null); // Reference to #scroll-trigger
 
   const fetchBooks = async (offset: number, limit: number): Promise<Book[]> => {
     try {
-      const response = await axios.get('/api/books', {
-        params: { query: searchTerm, offset, limit },
+      const response = await apiClient.get('/api/books', {
+        params: {
+          query: searchTerm,
+          offset,
+          limit,
+          favorites: favoritesQueried,
+          finished: finishedQueried,
+        },
       });
+      console.log('API Response:', response);
+      if (!response.data || !Array.isArray(response.data.books)) {
+        console.error('Invalid API response:', response.data);
+        return []; // Return an empty array if books is not an array
+      }
       const groupedBooks = groupAndSortBooks(response.data.books);
       return groupedBooks || [];
     } catch (error) {
@@ -94,10 +107,10 @@ const Home: React.FC = () => {
     }
   }, [loading, hasMore, offset, searchTerm]);
   const refreshBooks = () => {
-     setOffset(0); // Reset offset
-     setHasMore(true); // Allow loading more books
-     setBooks([]); // Clear current books and trigger re-fetch
-   };
+    setOffset(0); // Reset offset
+    setHasMore(true); // Allow loading more books
+    setBooks([]); // Clear current books and trigger re-fetch
+  };
 
   useEffect(() => {
     setOffset(0); // Reset offset when search term changes
@@ -134,8 +147,21 @@ const Home: React.FC = () => {
   return (
       <Container fluid className="p-4">
         <div className="wrapper-div">
-          <SearchBar onSearch={handleSearch} />
-          <Books books={books} refreshBooks={refreshBooks} />
+          <SearchBar
+              onSearch={handleSearch}
+              favoritesActive={favoritesQueried}
+              finishedActive={finishedQueried}
+              onFavoritesToggle={() => {
+                setFavoritesQueried((prev) => !prev); // Toggle favorite filter
+                refreshBooks(); // Refresh books when toggled
+              }}
+              onFinishedToggle={() => {
+                setFinishedQueried((prev) => !prev); // Toggle finished filter
+                refreshBooks(); // Refresh books when toggled
+              }}
+              isLoggedIn={isLoggedIn}
+          />
+          <Books books={books} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} />
           {loading && (
               <div className="text-center mt-4">
                 <p>Loading...</p>
@@ -144,7 +170,11 @@ const Home: React.FC = () => {
           <div ref={triggerRef} id="scroll-trigger" style={{ height: '1px' }} />
           {!hasMore && !loading && (
               <div className="text-center mt-4">
-                <p>No more books to load.</p>
+                {finishedQueried || favoritesQueried ? (
+                    <p>No books found with the selected filter.</p>
+                ) : (
+                    <p>No more books to load.</p>
+                )}
               </div>
           )}
         </div>
