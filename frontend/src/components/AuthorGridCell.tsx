@@ -1,8 +1,10 @@
 // AuthorGridCell.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSpring, animated } from '@react-spring/web';
+import { Button } from 'react-bootstrap';
 import './All.css';
+import { useConfig } from '../context/ConfigProvider';
 
 interface AuthorGridCellProps {
     letter: string;
@@ -27,27 +29,32 @@ const AuthorGridCell: React.FC<AuthorGridCellProps> = ({
         config: { tension: 1000, friction: 40 },
     });
 
+    const navigate = useNavigate();
+    const { UI_BASE_COLOR } = useConfig();
+
     return (
         <animated.div className={`grid-cell ${isExpanded ? 'expanded' : ''}`} style={styles}>
-            <button
-                className={`letter-button ${hasAuthors ? 'active' : 'disabled'}`}
+            <Button
+                variant={UI_BASE_COLOR}
+                className={`letter-button ${hasAuthors ? '' : 'disabled'}`}
                 onClick={() => hasAuthors && toggleLetter(letter)}
                 disabled={!hasAuthors}
             >
                 {letter}
-            </button>
+            </Button>
 
             <div className="authors-list">
                 {hasAuthors ? (
                     <div className="authors-grid">
                         {authors.map((author, index) => (
-                            <Link
+                            <Button
+                                variant={UI_BASE_COLOR}
                                 key={index}
-                                className="author-item link-button"
-                                to={`/authors/${author.replace(/\s+/g, '-').toLowerCase()}`} // Convert author name into a URL-safe string
+                                className="author-item link-button" // Add relevant button styles
+                                onClick={() => navigate(`/authors/${author.replace(/\s+/g, '-').toLowerCase()}`)} // Navigate to the target URL
                             >
                                 {author}
-                            </Link>
+                            </Button>
                         ))}
                     </div>
                 ) : (
