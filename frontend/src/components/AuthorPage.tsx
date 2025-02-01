@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, LinkProps } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../utilities/apiClient';
 import { Container, Row, Col, ButtonProps } from 'react-bootstrap';
 import BookCard from './BookCard';
 import { Book } from '../types';
@@ -42,7 +42,7 @@ const kebabToTitleCase = (str: string | undefined): string => {
         .join(' '); // Join them back with a space
 };
 
-const AuthorPage: React.FC = () => {
+const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
     const { authorName } = useParams<{ authorName: string }>(); // Get the author name from the route
     const [booksBySeries, setBooksBySeries] = useState<{ [key: string]: Book[] }>({});
     const [loading, setLoading] = useState(true);
@@ -54,7 +54,7 @@ const AuthorPage: React.FC = () => {
             setError(null);
 
             try {
-                const response = await axios.get(`/api/authors/${authorName}`);
+                const response = await apiClient.get(`/api/authors/${authorName}`);
                 const groupedBooks = groupAndSortBySeries(response.data.books);
                 setBooksBySeries(groupedBooks);
             } catch (err) {
@@ -77,7 +77,7 @@ const AuthorPage: React.FC = () => {
     }
 
     return (
-        <Container fluid className="p-4">
+        <Container fluid className="p-4 wrapper-div">
             {/* Header */}
             <div className="header-container">
                 <div className="spacer"></div>
@@ -106,7 +106,7 @@ const AuthorPage: React.FC = () => {
                                 lg={books.length <= 3 ? 2 : 2} /* Adjust for larger layouts */
                                 className="mb-4"
                             >
-                                <BookCard book={book} refreshBooks={() => {}} />
+                                <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} />
                             </Col>
                         ))}
                         {/* Add placeholders if the number of books is less than the grid capacity */}
