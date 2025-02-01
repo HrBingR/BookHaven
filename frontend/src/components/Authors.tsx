@@ -1,8 +1,10 @@
 // Authors.tsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../utilities/apiClient';
+import { Button } from 'react-bootstrap';
 import './All.css';
 import AuthorGridCell from './AuthorGridCell'; // Import the new component
+import { useConfig } from '../context/ConfigProvider';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -20,6 +22,7 @@ const Authors: React.FC = () => {
   const [expandedLetters, setExpandedLetters] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { UI_BASE_COLOR } = useConfig();
 
   // Fetch authors from the API
   useEffect(() => {
@@ -28,7 +31,7 @@ const Authors: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const response = await axios.get('/api/authors'); // Assume this fetches authors
+        const response = await apiClient.get('/api/authors'); // Assume this fetches authors
         const authors: string[] = response.data.authors;
 
         // Group authors by the first letter
@@ -102,12 +105,12 @@ const expandAll = () => {
       <h1 className="page-heading">Books by Author</h1>
       <hr className="authors-divider" /> {/* Separator line */}
       <div className="expand-controls mb-4">
-        <button className="btn btn-primary me-2" onClick={expandAll}>
+        <Button className="btn btn-primary me-2" onClick={expandAll} variant={UI_BASE_COLOR}>
           Expand All
-        </button>
-        <button className="btn btn-secondary collapse-button" onClick={collapseAll}>
+        </Button>
+        <Button className="btn btn-secondary collapse-button" onClick={collapseAll} variant={UI_BASE_COLOR}>
           Collapse All
-        </button>
+        </Button>
       </div>
 
       {/* Authors Grid */}
