@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
      resolve: {
        alias: {
@@ -33,4 +33,8 @@ export default defineConfig({
     strictPort: true,
     port: 5173,
   },
-});
+  build: {
+    minify: mode === 'production', // Disable minification for dev builds
+    sourcemap: mode !== 'production', // Enable source maps for easier debugging
+  }
+}));
