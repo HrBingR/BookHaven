@@ -87,12 +87,10 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
             {/* Books by Series */}
             {Object.entries(booksBySeries).map(([seriesName, books]) => (
                 <div key={seriesName} className="mb-4">
-                    {/* Series Title */}
                     <div className="series-title">
                         {seriesName !== "Standalone" ? seriesName : "Standalone Titles"}
                     </div>
 
-                    {/* Book Grid */}
                     <Row className="mt-4">
                         {books.map((book) => (
                             <Col
@@ -100,7 +98,7 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
                                 sm={12}
                                 md={6}
                                 lg={books.length <= 3 ? 2 : 2}
-                                className="mb-4"
+                                className="mb-4 card-column"
                             >
                                 <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} />
                             </Col>
