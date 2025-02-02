@@ -1,12 +1,12 @@
 services:
-  # The MySQL container is optional if you already have your own DB in place.
+  # The MySQL and Redis containers are optional if you already have your own DB in place.
   mysql:
     container_name: mysql
     image: mysql:latest
     env_file:
       - .env
     networks:
-      - epub-reader-net
+      - bookhaven-net
     volumes:
       - /path/to/mysql/storage:/var/lib/mysql
 
@@ -16,11 +16,11 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - epub-reader-net
+      - bookhaven-net
 
-  epub-reader:
-    container_name: epub-reader
-    image: epub-reader:latest
+  bookhaven:
+    container_name: bookhaven
+    image: hrbingr/bookhaven:latest
     env_file:
       - .env
     ports:
@@ -28,10 +28,10 @@ services:
     volumes:
       - /path/to/epub/directory:${BASE_DIRECTORY}
     networks:
-      - epub-reader-net
+      - bookhaven-net
     depends_on:
       - mysql
 
 networks:
-  epub-reader-net:
+  bookhaven-net:
     driver: bridge
