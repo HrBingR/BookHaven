@@ -160,10 +160,12 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               }}
               onFinishedToggle={() => {
                 setFinishedQueried((prev) => !prev); // Toggle finished filter
+                setUnfinishedQueried(false)
                 refreshBooks(); // Refresh books when toggled
               }}
               onUnfinishedToggle={() => {
                 setUnfinishedQueried((prev) => !prev);
+                setFinishedQueried(false)
                 refreshBooks();
               }}
               isLoggedIn={isLoggedIn}
