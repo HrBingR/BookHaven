@@ -477,10 +477,6 @@ button:focus {
     flex: 0 0 calc(30% - 10px); 
     max-width: calc(30% - 10px); 
   }
-  button {
-    
-    margin-bottom: 0.5rem; 
-  }
   .page-heading {
     font-size: 2rem; 
   }
