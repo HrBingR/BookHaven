@@ -1,0 +1,24 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/mixins";
+
+$theme-colors: map-merge($theme-colors, (
+        "pink": $pink,
+        "purple": $purple,
+        "orange": $orange,
+        "cyan": $cyan,
+));
+@import "bootstrap/scss/bootstrap";
+
+.btn-orange, .btn-pink, .btn-purple, .btn-cyan {
+  color: #fff;
+  &:hover {
+    color: #fff;
+  }
+}
+
+.btn-outline-orange, .btn-outline-pink, .btn-outline-purple, .btn-outline-cyan {
+  &:hover {
+    color: #fff;
+  }
+}
