@@ -357,8 +357,7 @@ button:focus {
 }
 
 .toggle-sidebar-btn {
-  display: none; 
-  background: #007bff !important;
+  display: none;
   top: 0 !important;
   left: 0 !important;
 }
