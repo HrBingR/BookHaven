@@ -22,5 +22,6 @@ def setup_cors(app):
         r"/login*": {"origins": allowed_origin},
         r"/api/admin/*": {"origins": allowed_origin},
         r"/validate-otp": {"origins": allowed_origin},
-        r"/scan-library": {"origins": allowed_origin}
+        r"/scan-library": {"origins": allowed_origin},
+        r"/scan-status/*": {"origins": allowed_origin}
     })
