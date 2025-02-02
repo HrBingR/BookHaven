@@ -25,12 +25,16 @@ def serve_react_app(path):
 def react_frontend_config():
 
     color_variants = {
-    'green': 'success',
-    'blue': 'primary',
-    'red': 'danger',
-    'yellow': 'warning',
-    'white': 'light',
-    'black': 'dark'
+        'green': 'success',
+        'blue': 'primary',
+        'red': 'danger',
+        'yellow': 'warning',
+        'white': 'light',
+        'black': 'dark',
+        'pink': 'pink',
+        'purple': 'purple',
+        'orange': 'orange',
+        'cyan': 'cyan'
     }
 
     color = color_variants.get(config.UI_BASE_COLOR, "success")
