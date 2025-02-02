@@ -35,18 +35,36 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onSearch(searchTerm);
     };
     const handleScan = async () => {
-        try{
-            await apiClient.post('/scan-library', {});
+        try {
+            // 1) Trigger the scan and get the task ID
+            const response = await apiClient.post('/scan-library', {});
+            const taskId = response.data.task_id;
+
+            // 2) Show a "scanning" message
             setAlertMessage("Scanning Library...");
             setShowAlert(true);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            window.location.reload();
-            setShowAlert(false);
-            setAlertMessage('');
+
+            // 3) Poll for completion
+            let isCompleted = false;
+            while (!isCompleted) {
+                const statusResp = await apiClient.get(`/scan-status/${taskId}`);
+                const taskState = statusResp.data.state;
+                if (taskState === "SUCCESS" || taskState === "FAILURE") {
+                    isCompleted = true;
+                } else {
+                    // Wait a bit before checking again
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            // 4) Show success message (or handle failure)
+            setAlertMessage("Library scan complete! Please refresh to see results.");
+            // At this point you can reload or just let users stay on the page
         } catch (err: any) {
             alert(err.message);
         }
-    }
+    };
+
 
     return (
         <Form onSubmit={handleSubmit}>
@@ -95,8 +113,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         >
                             Unfinished
                         </Button>
+                        {showAlert && <Alert variant="success" onClose={() => setShowAlert(false)} dismissible>{alertMessage}</Alert>}
                     </ButtonGroup>
-                    {showAlert && <Alert variant="success" onClose={() => setShowAlert(false)} dismissible>{alertMessage}</Alert>}
                 </div>
             )}
         </Form>
