@@ -114,7 +114,6 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                         top: '10px',
                         left: isOpen ? '210px' : '10px',
                         zIndex: 1000,
-                        background: 'rgba(0, 0, 0, 0.8)',
                         color: '#fff',
                         border: 'none',
                         padding: '8px 12px',
