@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
 import AccountModal from './AccountModal';
 import AdminModal from './AdminModal';
+import {useConfig} from "../context/ConfigProvider.tsx";
 
 const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () => void }> = ({ isLoggedIn, isAdmin, onLogout }) => {
     const [isOpen, setIsOpen] = useState(true);
     const [isMobileView, setIsMobileView] = useState(false);
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showAdminModal, setShowAdminModal] = useState(false);
+    const { UI_BASE_COLOR } = useConfig();
 
     useEffect(() => {
         const handleResize = () => {
@@ -103,7 +105,8 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                     </div> )}
             </div>
             {isMobileView && (
-                <button
+                <Button
+                    variant={UI_BASE_COLOR}
                     className="toggle-sidebar-btn"
                     onClick={toggleSidebar}
                     style={{
@@ -120,7 +123,7 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                     }}
                 >
                     {isOpen ? 'Close' : 'Menu'}
-                </button>
+                </Button>
             )}
             {/* Account Modal */}
             {isLoggedIn && (
