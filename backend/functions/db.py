@@ -9,13 +9,10 @@ def get_database_url():
     if config.DB_TYPE == 'test':
         return "sqlite:///tests/test.db"
     elif config.DB_TYPE == 'mysql':
-        # MySQL URL: mysql+pymysql://username:password@host[:port]/dbname
         return f"mysql+pymysql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT or 3306}/{config.DB_NAME}"
     elif config.DB_TYPE == 'postgres':
-        # Postgres URL: postgresql://username:password@host[:port]/dbname
         return f"postgresql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT or 5432}/{config.DB_NAME}"
     elif config.DB_TYPE == 'sqlite':
-        # Use SQLite's specific URL format (file-based)
         return f"sqlite:///{config.DB_NAME}.db"
     else:
         raise ValueError(f"Unsupported DB_TYPE: {config.DB_TYPE}")

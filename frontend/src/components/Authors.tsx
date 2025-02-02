@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../utilities/apiClient';
 import { Button } from 'react-bootstrap';
 import './All.css';
-import AuthorGridCell from './AuthorGridCell'; // Import the new component
+import AuthorGridCell from './AuthorGridCell';
 import { useConfig } from '../context/ConfigProvider';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -15,7 +15,7 @@ interface AuthorsData {
 const Authors: React.FC = () => {
   const [authorsData, setAuthorsData] = useState<AuthorsData>(
     alphabet.reduce((acc, letter) => {
-      acc[letter] = []; // Empty array for default
+      acc[letter] = [];
       return acc;
     }, {} as AuthorsData)
   );
@@ -24,17 +24,15 @@ const Authors: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { UI_BASE_COLOR } = useConfig();
 
-  // Fetch authors from the API
   useEffect(() => {
     const fetchAuthors = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await apiClient.get('/api/authors'); // Assume this fetches authors
+        const response = await apiClient.get('/api/authors');
         const authors: string[] = response.data.authors;
 
-        // Group authors by the first letter
         const groupedAuthors: AuthorsData = alphabet.reduce((acc, letter) => {
           acc[letter] = [];
           return acc;
@@ -59,7 +57,6 @@ const Authors: React.FC = () => {
     fetchAuthors();
   }, []);
 
-  // Toggle letter expansion
   const toggleLetter = (letter: string) => {
     setExpandedLetters((prev) => {
       const updated = new Set(prev);
@@ -72,8 +69,6 @@ const Authors: React.FC = () => {
     });
   };
 
-  // Expand all letters
-// Expand only letters that have authors
 const expandAll = () => {
   const lettersWithAuthors = new Set(
     alphabet.filter((letter) => authorsData[letter]?.length > 0)
@@ -81,7 +76,6 @@ const expandAll = () => {
   setExpandedLetters(lettersWithAuthors);
 };
 
-  // Collapse all letters
   const collapseAll = () => {
     setExpandedLetters(new Set());
   };
@@ -113,7 +107,6 @@ const expandAll = () => {
         </Button>
       </div>
 
-      {/* Authors Grid */}
       <div className="grid">
         {alphabet.map((letter) => {
           const hasAuthors = authorsData[letter]?.length > 0;

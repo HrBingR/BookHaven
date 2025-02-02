@@ -15,12 +15,12 @@ def setup_limiter(app):
 def setup_cors(app):
     allowed_origin = config.BASE_URL
     CORS(app, resources={
-        r"/api/*": {"origins": allowed_origin},  # API modules: authors, books, users, etc.
-        r"/stream/*": {"origins": allowed_origin},  # Media streaming endpoints
-        r"/files/*": {"origins": allowed_origin},  # File-serving routes
-        r"/download/*": {"origins": allowed_origin},  # File download endpoints
-        r"/login*": {"origins": allowed_origin},  # Authentication: login, OTP handling
-        r"/api/admin/*": {"origins": allowed_origin},  # Admin-related endpoints
+        r"/api/*": {"origins": allowed_origin},
+        r"/stream/*": {"origins": allowed_origin},
+        r"/files/*": {"origins": allowed_origin},
+        r"/download/*": {"origins": allowed_origin},
+        r"/login*": {"origins": allowed_origin},
+        r"/api/admin/*": {"origins": allowed_origin},
         r"/validate-otp": {"origins": allowed_origin},
         r"/scan-library": {"origins": allowed_origin}
     })

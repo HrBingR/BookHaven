@@ -23,31 +23,27 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
             setError(null); // Reset errors
             const response = await apiClient.post('/login', { username, password });
 
-            const token = response.data.token; // Assume token is returned as "token"
+            const token = response.data.token;
             onLogin(token);
             const decoded: DecodedToken = jwtDecode(token);
 
-            // Save the token (e.g., to localStorage)
             localStorage.setItem('token', token);
 
             if (decoded.token_type === 'login') {
-                // If login is successful, redirect to the last page or home
                 const redirectTo = localStorage.getItem('redirect') || '/';
                 localStorage.removeItem('redirect');
                 navigate(redirectTo);
             } else if (decoded.token_type === 'totp') {
-                // Redirect to the OTP flow
                 navigate('/otp');
             }
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Incorrect username or password. Please try again.';
             setError(errorMessage);
 
-            // Clear error and reset form inputs after 1.5 seconds
             setTimeout(() => {
-                setError(null); // Clear error
-                setUsername(''); // Reset username input
-                setPassword(''); // Reset password input
+                setError(null);
+                setUsername('');
+                setPassword('');
             }, 1500);
         }
     };

@@ -6,36 +6,31 @@ import Books from './Books';
 import { Container } from 'react-bootstrap';
 import { Book } from '../types';
 
-const CHUNK_SIZE = 18; // Number of books to fetch per request
-const MAX_WINDOW_SIZE = 54; // Maximum number of books to keep in memory (sliding window)
+const CHUNK_SIZE = 18;
+const MAX_WINDOW_SIZE = 54;
 
 const groupAndSortBooks = (books: Book[]): Book[] => {
   const sortedBooks = [...books];
 
   sortedBooks.sort((a, b) => {
-    // Step 1: Compare by the first author alphabetically
     const authorComparison = a.authors[0].localeCompare(b.authors[0]);
     if (authorComparison !== 0) return authorComparison;
 
-    // Step 2: Compare by series name alphabetically (if both are in a series)
     if (a.series && b.series) {
       const seriesComparison = a.series.localeCompare(b.series);
       if (seriesComparison !== 0) return seriesComparison;
     }
 
-    // Step 3: If either book is not in a series, sort books not in a series after those in a series
     if (!a.series && b.series) {
       return 1;
     } else if (a.series && !b.series) {
       return -1;
     }
 
-    // Step 4: If both are in the same series, compare by series index (ascending)
     if (a.series && b.series && a.series === b.series) {
       return (a.seriesindex || 0) - (b.seriesindex || 0);
     }
 
-    // Step 5: If neither is in a series, or series/index comparison is equal, compare by title alphabetically
     return a.title.localeCompare(b.title);
   });
 
@@ -43,17 +38,17 @@ const groupAndSortBooks = (books: Book[]): Book[] => {
 };
 
 const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
-  const [books, setBooks] = useState<Book[]>([]); // Current list of books
-  const [offset, setOffset] = useState<number>(0); // Offset for fetching the next books
-  const [hasMore, setHasMore] = useState<boolean>(true); // Tracks whether more books are available
-  const [loading, setLoading] = useState<boolean>(false); // Tracks if books are being loaded
-  const [searchTerm, setSearchTerm] = useState<string>(''); // Tracks the search query
+  const [books, setBooks] = useState<Book[]>([]);
+  const [offset, setOffset] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [favoritesQueried, setFavoritesQueried] = useState<boolean>(false);
   const [finishedQueried, setFinishedQueried] = useState<boolean>(false);
   const [unfinishedQueried, setUnfinishedQueried] = useState<boolean>(false);
 
-  const observerRef = useRef<IntersectionObserver | null>(null); // Reference to IntersectionObserver
-  const triggerRef = useRef<HTMLDivElement | null>(null); // Reference to #scroll-trigger
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const triggerRef = useRef<HTMLDivElement | null>(null);
 
   const fetchBooks = async (offset: number, limit: number): Promise<Book[]> => {
     try {
@@ -70,7 +65,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
       console.log('API Response:', response);
       if (!response.data || !Array.isArray(response.data.books)) {
         console.error('Invalid API response:', response.data);
-        return []; // Return an empty array if books is not an array
+        return [];
       }
       const groupedBooks = groupAndSortBooks(response.data.books);
       return groupedBooks || [];
@@ -99,7 +94,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
 
         const updatedBooks = [...prevBooks, ...uniqueNewBooks];
         return updatedBooks.length > MAX_WINDOW_SIZE
-            ? updatedBooks.slice(CHUNK_SIZE) // Trim old books beyond the limit
+            ? updatedBooks.slice(CHUNK_SIZE)
             : updatedBooks;
       });
 
@@ -109,15 +104,15 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
     }
   }, [loading, hasMore, offset, searchTerm]);
   const refreshBooks = () => {
-    setOffset(0); // Reset offset
-    setHasMore(true); // Allow loading more books
-    setBooks([]); // Clear current books and trigger re-fetch
+    setOffset(0);
+    setHasMore(true);
+    setBooks([]);
   };
 
   useEffect(() => {
-    setOffset(0); // Reset offset when search term changes
-    setHasMore(true); // Allow loading more books
-    setBooks([]); // Clear current books
+    setOffset(0);
+    setHasMore(true);
+    setBooks([]);
   }, [searchTerm]);
 
   useEffect(() => {
@@ -155,13 +150,13 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               finishedActive={finishedQueried}
               unFinishedActive={unfinishedQueried}
               onFavoritesToggle={() => {
-                setFavoritesQueried((prev) => !prev); // Toggle favorite filter
-                refreshBooks(); // Refresh books when toggled
+                setFavoritesQueried((prev) => !prev);
+                refreshBooks();
               }}
               onFinishedToggle={() => {
-                setFinishedQueried((prev) => !prev); // Toggle finished filter
+                setFinishedQueried((prev) => !prev);
                 setUnfinishedQueried(false)
-                refreshBooks(); // Refresh books when toggled
+                refreshBooks();
               }}
               onUnfinishedToggle={() => {
                 setUnfinishedQueried((prev) => !prev);

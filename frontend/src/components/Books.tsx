@@ -16,9 +16,9 @@ const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn }) => {
         {books.map((book) => (
             <Col
                 key={book.id}
-                sm={6} /* Full width on small devices */
-                md={4} /* Half width on medium devices */
-                lg={3} /* Adjust for larger layouts */
+                sm={6}
+                md={4}
+                lg={3}
                 xl={3}
                 xxl={2}
                 className="mb-4 card-column"

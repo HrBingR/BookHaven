@@ -3,43 +3,32 @@ from functions.db import get_session
 from functools import wraps
 import random
 import string
-from functions.utils import hash_password, check_pw_complexity  # Assuming you implemented this function
-from functions.auth import verify_token  # Import the verify_token method from auth.py
+from functions.utils import hash_password, check_pw_complexity
+from functions.auth import verify_token
 from models.users import Users
 from config.logger import logger
 from email_validator import validate_email, EmailNotValidError
 from sqlalchemy.exc import SQLAlchemyError
 
-# Create the Blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
-# Middleware to ensure user is an admin
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Get the token from the Authorization header
         auth_header = request.headers.get('Authorization')
         if not auth_header or not auth_header.startswith("Bearer "):
             logger.warning("Warning: User attempted Admin action without a valid auth header.")
             return jsonify({"error": "Missing or invalid Authorization header."}), 401
-
         token = auth_header.split(" ")[1]
-
-        # Verify the token
         decoded_token = verify_token(token)
         if not decoded_token:
             logger.warning("Warning: User attempted Admin action with an invalid or expired token.")
             return jsonify({"error": "Invalid or expired token."}), 401
-
-        # Ensure the user is an admin
         if not decoded_token.get("user_is_admin", False):
             logger.warning(f"Warning: Non-Admin UID {decoded_token.get("user_id")} attempted to access admin-function.")
             return jsonify({"error": "Forbidden. Admin access only."}), 403
-
-        # Pass the decoded_token to the route function
         g.user = decoded_token
         return func(*args, **kwargs)
-
     return wrapper
 
 def generate_random_password(length=12):
@@ -79,16 +68,11 @@ def change_user_admin_status(user_id):
     """Change the admin's status for a user"""
     session = get_session()
     data = request.get_json()
-
-    # Validate input
     if "is_admin" not in data or not isinstance(data["is_admin"], bool):
         return jsonify({"error": "Invalid is_admin value provided. Must be a boolean."}), 400
-
-    # Prevent downgrading own admin status
     current_user_id = g.user["user_id"]
     if current_user_id == user_id and not data["is_admin"]:
         return jsonify({"error": "Admins cannot remove their own admin status."}), 400
-
     try:
         user = session.query(Users).filter_by(id=user_id).first()
         if not user:

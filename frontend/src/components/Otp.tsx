@@ -19,14 +19,13 @@ const OTP: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            setError(null); // Reset errors
+            setError(null);
             const response = await apiClient.post('/login/check-otp', { otp });
 
-            const token = response.data.token; // Assume token is returned as "token"
+            const token = response.data.token;
             const decoded: DecodedToken = jwtDecode(token);
 
             if (decoded.token_type === 'login') {
-                // Save token and navigate to redirected page or home
                 localStorage.setItem('token', token);
                 const redirectTo = localStorage.getItem('redirect') || '/';
                 localStorage.removeItem('redirect');

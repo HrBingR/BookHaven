@@ -6,10 +6,8 @@ import BookCard from './BookCard';
 import { Book } from '../types';
 import './All.css';
 
-// Extend ButtonProps to include React Router "to" Prop
 type ButtonLinkProps = ButtonProps & LinkProps;
 
-// Fix Link for react-bootstrap compatibility
 const RouterLink = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(({ to, ...rest }, ref) => (
     <Link ref={ref} to={to} {...rest} />
 ));
@@ -19,14 +17,13 @@ const groupAndSortBySeries = (books: Book[]) => {
     const grouped: { [key: string]: Book[] } = {};
 
     books.forEach((book) => {
-        const seriesName = book.series || "Standalone"; // Group standalone books separately
+        const seriesName = book.series || "Standalone";
         if (!grouped[seriesName]) {
             grouped[seriesName] = [];
         }
         grouped[seriesName].push(book);
     });
 
-    // Sort books within each group by series index
     for (const series in grouped) {
         grouped[series].sort((a, b) => (a.seriesindex || 0) - (b.seriesindex || 0));
     }
@@ -35,15 +32,15 @@ const groupAndSortBySeries = (books: Book[]) => {
 };
 
 const kebabToTitleCase = (str: string | undefined): string => {
-    if (!str) return ""; // Handle undefined input
+    if (!str) return "";
     return str
-        .split('-') // Split into words based on the hyphen
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize first letter of each word
-        .join(' '); // Join them back with a space
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 };
 
 const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
-    const { authorName } = useParams<{ authorName: string }>(); // Get the author name from the route
+    const { authorName } = useParams<{ authorName: string }>();
     const [booksBySeries, setBooksBySeries] = useState<{ [key: string]: Book[] }>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -78,7 +75,6 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
 
     return (
         <Container fluid className="p-4 wrapper-div">
-            {/* Header */}
             <div className="header-container">
                 <div className="spacer"></div>
                 <h2 className="text-center title">{kebabToTitleCase(authorName)}</h2>
@@ -101,15 +97,14 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
                         {books.map((book) => (
                             <Col
                                 key={book.id}
-                                sm={12} /* Full width on small devices */
-                                md={6} /* Half width when <= 2 books */
-                                lg={books.length <= 3 ? 2 : 2} /* Adjust for larger layouts */
+                                sm={12}
+                                md={6}
+                                lg={books.length <= 3 ? 2 : 2}
                                 className="mb-4"
                             >
                                 <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} />
                             </Col>
                         ))}
-                        {/* Add placeholders if the number of books is less than the grid capacity */}
                         {books.length < 3 &&
                             Array.from({ length: 7 - books.length }, (_, index) => (
                                 <Col

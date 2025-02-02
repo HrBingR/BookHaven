@@ -6,25 +6,24 @@ import AccountModal from './AccountModal';
 import AdminModal from './AdminModal';
 
 const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () => void }> = ({ isLoggedIn, isAdmin, onLogout }) => {
-    const [isOpen, setIsOpen] = useState(true); // State to track sidebar toggle
-    const [isMobileView, setIsMobileView] = useState(false); // State to handle mobile vs desktop view
-    const [showAccountModal, setShowAccountModal] = useState(false); // State to show/hide account modal
+    const [isOpen, setIsOpen] = useState(true);
+    const [isMobileView, setIsMobileView] = useState(false);
+    const [showAccountModal, setShowAccountModal] = useState(false);
     const [showAdminModal, setShowAdminModal] = useState(false);
 
-    // Monitor viewport changes and determine if we're in a mobile view
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 780) {
                 setIsMobileView(true);
-                setIsOpen(false); // Close sidebar by default in mobile view
+                setIsOpen(false);
             } else {
                 setIsMobileView(false);
-                setIsOpen(true); // Ensure it's open by default in desktop view
+                setIsOpen(true);
             }
         };
-        handleResize(); // Run on initial render
-        window.addEventListener('resize', handleResize); // Attach event listener
-        return () => window.removeEventListener('resize', handleResize); // Cleanup listener
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, [])
 
     const toggleSidebar = () => {
@@ -37,12 +36,10 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
             <div
                 className={`sidebar bg-light border-right ${isMobileView ? (isOpen ? 'open' : 'closed') : ''}`}
                 style={{
-                    // width: isMobileView && !isOpen ? '0' : '19vw', // Collapse on mobile when closed
                     minHeight: '100vh',
-                    overflow: isMobileView && !isOpen ? 'hidden' : 'visible', // Manage overflow in mobile view
-                    // position: isMobileView ? 'fixed' : 'relative', // Absolute overlay for mobile, inline for desktop
-                    transition: 'width 0.3s ease, left 0.3s ease', // Smooth animations for opening/closing
-                    zIndex: isMobileView ? 999 : 'auto', // Layered above content on mobile
+                    overflow: isMobileView && !isOpen ? 'hidden' : 'visible',
+                    transition: 'width 0.3s ease, left 0.3s ease',
+                    zIndex: isMobileView ? 999 : 'auto',
                 }}
             >
                 <div className="sidebar-heading p-3">BookHaven</div>
@@ -59,7 +56,7 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                         <>
                             <button
                                 className="list-group-item list-group-item-action bg-light border-0"
-                                onClick={() => setShowAccountModal(true)} // Show the Account Modal
+                                onClick={() => setShowAccountModal(true)}
                                 style={{
                                     textAlign: 'left',
                                     background: 'none',
@@ -86,7 +83,6 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                         </>
                     )}
                 </div>
-                {/* Logout Button */}
                 {isLoggedIn && (
                     <div
                         className="d-flex justify-content-center align-items-center p-3 mt-auto"
@@ -106,7 +102,6 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
 
                     </div> )}
             </div>
-            {/* Toggle Button (Only appears in mobile view) */}
             {isMobileView && (
                 <button
                     className="toggle-sidebar-btn"
@@ -114,8 +109,8 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                     style={{
                         position: 'fixed',
                         top: '10px',
-                        left: isOpen ? '210px' : '10px', // Adjust dynamic positioning
-                        zIndex: 1000, // Ensure it's above other elements
+                        left: isOpen ? '210px' : '10px',
+                        zIndex: 1000,
                         background: 'rgba(0, 0, 0, 0.8)',
                         color: '#fff',
                         border: 'none',

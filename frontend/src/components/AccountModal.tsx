@@ -26,7 +26,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
         try {
             const response = await apiClient.get('/api/user/get-mfa-status');
             const { message } = response.data;
-            setIsMfaEnabled(message === "true"); // Convert to boolean here
+            setIsMfaEnabled(message === "true");
         } catch (err: any) {
             console.error('Error fetching MFA status:', err);
         }
@@ -46,31 +46,31 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
 
     // Handle change password submission
     const handlePasswordChange = async () => {
-        setPasswordError(null); // Reset errors
+        setPasswordError(null);
         try {
             await apiClient.patch('/api/user/change-password', {
                 old_password: oldPassword,
                 new_password: newPassword,
             });
             alert('Your password has been changed successfully!');
-            onClose(); // Close the modal
+            onClose();
             setView("main");
         } catch (err: any) {
-            setPasswordError(err.message); // Set inline error
+            setPasswordError(err.message);
         }
     };
 
     // Handle enabling MFA
     const handleEnableMFA = async () => {
-        setMfaError(null); // Reset errors
+        setMfaError(null);
         try {
             const response = await apiClient.post('/api/user/enable-mfa', {});
             const { totp_provisioning_url, mfa_secret } = response.data;
             setProvisioningUrl(totp_provisioning_url);
             setMfaSecret(mfa_secret);
-            setView('mfa-setup'); // Move to MFA setup flow
+            setView('mfa-setup');
         } catch (err: any) {
-            setMfaError(err.message); // Set inline error
+            setMfaError(err.message);
         }
     };
 
@@ -89,14 +89,14 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
 
     // Handle OTP submission
     const handleValidateOtp = async () => {
-        setMfaError(null); // Reset errors
+        setMfaError(null);
         try {
             await apiClient.post('/validate-otp', { otp });
             alert('MFA setup completed successfully!');
-            onClose(); // Close the modal
+            onClose();
             setView("main");
         } catch (err: any) {
-            setMfaError(err.message); // Set inline error
+            setMfaError(err.message);
         }
     }
 
@@ -214,12 +214,11 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             <Modal.Body>
                 <SwitchTransition mode="out-in">
                     <CSSTransition
-                        key={view}          // Re-renders child when 'view' changes
-                        timeout={100}       // Adjust as desired
-                        classNames="fade"   // Matches our fade CSS class
+                        key={view}
+                        timeout={100}
+                        classNames="fade"
                         unmountOnExit
                     >
-                        {/* This is the single “child” to animate in/out */}
                         <div>{renderView()}</div>
                     </CSSTransition>
                 </SwitchTransition>

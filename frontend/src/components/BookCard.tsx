@@ -2,7 +2,7 @@
 import React, {useState} from 'react';
 import { Card, Button, ButtonGroup, DropdownButton, Modal, Form, Alert } from 'react-bootstrap';
 import apiClient from '../utilities/apiClient';
-import './All.css'; // Import the CSS file
+import './All.css';
 import { Book } from '../types';
 import { useConfig } from '../context/ConfigProvider';
 
@@ -20,8 +20,8 @@ const debounce = (cb: Function, delay: number = 300) => {
 
 const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) => {
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false); // To control the spinner state
-  const [error, setError] = useState<string | null>(null); // Capture save errors
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState(book.title);
   const [newAuthors, setNewAuthors] = useState(book.authors.join(', '));
   const [newSeries, setNewSeries] = useState(book.series || '');
@@ -32,10 +32,8 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
   const { UI_BASE_COLOR } = useConfig();
 
   const handleSave = () => {
-    // Clear any previous error
     setError(null);
 
-    // Prepare save logic
     const saveRequest = async () => {
       const formData = new FormData();
       formData.append('identifier', book.identifier);
@@ -47,30 +45,28 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
         formData.append('coverImage', newCover);
       }
 
-      setLoading(true); // Show spinner
+      setLoading(true);
 
-      // Retry and error handling logic remains the same
       try {
         await apiClient.post('/api/books/edit', formData);
         setShowModal(false);
         setLoading(false);
-        refreshBooks(); // Refresh the book list
+        refreshBooks();
       } catch (err) {
         console.error('Error updating book metadata:', err);
         setError('Failed to save. Retrying...');
-        setTimeout(saveRequest, 2000); // Retry after 2 seconds
+        setTimeout(saveRequest, 2000);
       }
     };
 
-    // Wrap the save logic in debounce
-    debounce(saveRequest, 500); // Debounce for 500ms (you can adjust this delay as needed)
+    debounce(saveRequest, 500);
   };
 
   const handleToggleFavorite = async () => {
     if (!isLoggedIn) return;
 
     const newFavoriteState = !isFavorite;
-    setIsFavorite(newFavoriteState); // Update UI immediately
+    setIsFavorite(newFavoriteState);
 
     try {
       const response = await apiClient.put(`/api/books/${book.identifier}/progress_state`, {
@@ -78,21 +74,20 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
       });
 
       if (response.status !== 200) {
-        setIsFavorite(!newFavoriteState); // Revert on failure
+        setIsFavorite(!newFavoriteState);
         console.error('Failed to toggle favorite state.');
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      setIsFavorite(!newFavoriteState); // Revert on error
+      setIsFavorite(!newFavoriteState);
     }
   };
 
-  // Optimistic toggle for "Finished"
   const handleToggleFinished = async () => {
     if (!isLoggedIn) return;
 
     const newFinishedState = !isFinished;
-    setIsFinished(newFinishedState); // Update UI immediately
+    setIsFinished(newFinishedState);
 
     try {
       const response = await apiClient.put(`/api/books/${book.identifier}/progress_state`, {
@@ -100,12 +95,12 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
       });
 
       if (response.status !== 200) {
-        setIsFinished(!newFinishedState); // Revert on failure
+        setIsFinished(!newFinishedState);
         console.error('Failed to toggle finished state.');
       }
     } catch (error) {
       console.error('Error toggling finished:', error);
-      setIsFinished(!newFinishedState); // Revert on error
+      setIsFinished(!newFinishedState);
     }
   };
 
@@ -130,7 +125,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
         </Card.Body>
         <div className="card-footer">
           <ButtonGroup>
-            {/* Read Button */}
             <Button
                 variant={UI_BASE_COLOR}
                 href={`/read/${book.identifier}`}
@@ -139,7 +133,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
               <i className="fas fa-book"></i>
             </Button>
 
-            {/* Download Button */}
             <Button
                 variant={UI_BASE_COLOR}
                 href={`/download/${book.identifier}`}
@@ -147,7 +140,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
             >
               <i className="fas fa-download"></i>
             </Button>
-            {/* Edit Button */}
             <DropdownButton as={ButtonGroup} title=" " id="bg-nested-dropdown" variant={UI_BASE_COLOR}>
               <ButtonGroup>
                 <Button
@@ -179,7 +171,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
           </ButtonGroup>
         </div>
 
-        {/* Edit Metadata Modal */}
         <Modal show={showModal} onHide={() => setShowModal(false)}>
           <Modal.Header closeButton>
             <Modal.Title>Edit Metadata</Modal.Title>

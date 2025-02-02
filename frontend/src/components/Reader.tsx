@@ -6,10 +6,10 @@ import "./All.css";
 
 const Reader: React.FC = () => {
     const { identifier } = useParams<{ identifier: string }>();
-    const [epubUrl, setEpubUrl] = useState<string>(""); // URL of the ePub file
-    const [location, setLocation] = useState<string | null>(null); // Reading progress
-    const [fontSize, setFontSize] = useState<number>(16); // Font size (default: 16px)
-    const renditionRef = useRef<any>(null); // Reference for react-reader's Rendition
+    const [epubUrl, setEpubUrl] = useState<string>("");
+    const [location, setLocation] = useState<string | null>(null);
+    const [fontSize, setFontSize] = useState<number>(16);
+    const renditionRef = useRef<any>(null);
 
     useEffect(() => {
         const fetchBookDetails = async () => {
@@ -20,8 +20,8 @@ const Reader: React.FC = () => {
                 const { url } = streamResponse.data;
                 console.log(url);
 
-                setEpubUrl(url); // Set the stream URL
-                if (progress) setLocation(progress); // Restore reading progress
+                setEpubUrl(url);
+                if (progress) setLocation(progress);
             } catch (err) {
                 console.error("Error occurred while fetching book details:", err);
             }
@@ -39,13 +39,13 @@ const Reader: React.FC = () => {
     };
 
     const onLocationChange = (cfi: string) => {
-        setLocation(cfi); // Update progress locally
-        saveProgress(cfi); // Save progress to API
+        setLocation(cfi);
+        saveProgress(cfi);
     };
 
     const increaseFontSize = () => {
         setFontSize((prevFontSize) => {
-            const newFontSize = prevFontSize + 2; // Increment font size
+            const newFontSize = prevFontSize + 2;
             updateFontSize(newFontSize);
             return newFontSize;
         });
@@ -53,7 +53,7 @@ const Reader: React.FC = () => {
 
     const decreaseFontSize = () => {
         setFontSize((prevFontSize) => {
-            const newFontSize = prevFontSize > 10 ? prevFontSize - 2 : prevFontSize; // Decrement font size, min 10px
+            const newFontSize = prevFontSize > 10 ? prevFontSize - 2 : prevFontSize;
             updateFontSize(newFontSize);
             return newFontSize;
         });
@@ -61,13 +61,12 @@ const Reader: React.FC = () => {
 
     const updateFontSize = (size: number) => {
         if (renditionRef.current) {
-            renditionRef.current.themes.fontSize(`${size}px`); // Update font size in the rendition
+            renditionRef.current.themes.fontSize(`${size}px`);
         }
     };
 
     return (
         <div className="reader-container">
-            {/* Font Size Controls */}
             <div className="reader-content">
                 <div className="reader-font-controls">
                     <button onClick={increaseFontSize}>+</button>
@@ -80,14 +79,13 @@ const Reader: React.FC = () => {
                         locationChanged={onLocationChange}
                         getRendition={(rendition) => {
                             renditionRef.current = rendition;
-                            // Set up default font size when the book is loaded
                             renditionRef.current.themes.default({
                                 body: {
                                     overflow: "hidden",
                                 },
                             });
-                            updateFontSize(fontSize); // Apply the current font size
-                            renditionRef.current.flow("scrolled"); // Enable scrolling flow
+                            updateFontSize(fontSize);
+                            renditionRef.current.flow("scrolled");
                         }}
                     />
                 )}

@@ -14,35 +14,26 @@ def get_cover(book_identifier):
     """
     session = get_session()
     book_record = session.query(EpubMetadata).filter_by(identifier=str(book_identifier)).first()
-
     if not book_record or not book_record.cover_image_data:
         placeholder_path = os.path.join(app.static_folder, 'placeholder.jpg')
         with open(placeholder_path, 'rb') as f:
             placeholder_image = f.read()
-        # Set browser caching headers
         return Response(placeholder_image, mimetype='image/jpeg', headers={
-            "Cache-Control": "public, max-age=259200"  # Cache for 1 year
+            "Cache-Control": "public, max-age=259200"
         })
-
-    # Set browser caching headers for actual cover
     logger.debug(f"Content media type is {book_record.cover_media_type}")
     return Response(book_record.cover_image_data, mimetype=book_record.cover_media_type, headers={
-        "Cache-Control": "public, max-age=259200"  # Cache for 1 year
+        "Cache-Control": "public, max-age=259200"
     })
 
 @media_bp.route('/download/<string:book_identifier>', methods=['GET'])
 def download(book_identifier):
     session = get_session()
-
-    # Optionally validate that the relative_path exists in the database
     book_record = session.query(EpubMetadata).filter_by(identifier=str(book_identifier)).first()
     logger.debug(f"BASE DIR: {config.BASE_DIRECTORY}")
-
     if not book_record:
         abort(404, description="Resource not found")
-
     relative_path = book_record.relative_path
-    # Ensure the base directory remains consistent
     try:
         custom_file_header = request.headers.get("file")
         if config.ENVIRONMENT == "test" and custom_file_header == "not_found":
@@ -54,25 +45,14 @@ def download(book_identifier):
 @media_bp.route('/stream/<string:book_identifier>', methods=['GET'])
 def stream(book_identifier):
     session = get_session()
-
-    # Fetch the book's metadata from the database
     book_record = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
     if not book_record:
         abort(404, description="Book not found.")
-
-    # Get the relative path of the book
     relative_path = book_record.relative_path
-
-    # Combine base directory + relative path to get the full file path
     full_path = os.path.join(config.BASE_DIRECTORY, relative_path)
-
-    # Check if the file exists
     if not os.path.exists(full_path):
         abort(404, description="ePub file not found.")
-
-    # Generate the correct accessible URL for this file
     epub_file_url = config.BASE_URL.rstrip("/") + url_for('media.serve_book_file', filename=relative_path)
-
     return jsonify({"url": epub_file_url})
 
 @media_bp.route('/files/<path:filename>', methods=['GET'])

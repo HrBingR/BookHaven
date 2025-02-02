@@ -21,7 +21,6 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const { UI_BASE_COLOR } = useConfig();
 
-    // Fetch all users when modal opens
     useEffect(() => {
         fetchAllUsers();
     }, []);
@@ -29,7 +28,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
     const fetchAllUsers = async () => {
         try {
             const response = await apiClient.get('/api/admin/users');
-            setUsers(response.data); // Assume API returns a list of user objects
+            setUsers(response.data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch users.');
         }
@@ -90,12 +89,12 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
     const handleRegisterUser = async () => {
         try {
             await apiClient.post('/api/admin/users/register', {
-                username: username, // Placeholder username from email
+                username: username,
                 email: email,
                 password: password,
             });
             setSuccessMessage('User registered successfully.');
-            fetchAllUsers(); // Refresh user list
+            fetchAllUsers();
             setView('main');
         } catch (err: any) {
             setError(err.message || 'Failed to register user.');
@@ -322,12 +321,11 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                 {successMessage && <Alert variant="success">{successMessage}</Alert>}
                 <SwitchTransition mode="out-in">
                     <CSSTransition
-                        key={view}          // Re-renders child when 'view' changes
-                        timeout={100}       // Adjust as desired
-                        classNames="fade"   // Matches our fade CSS class
+                        key={view}
+                        timeout={100}
+                        classNames="fade"
                         unmountOnExit
                     >
-                        {/* This is the single “child” to animate in/out */}
                         <div>{renderView()}</div>
                     </CSSTransition>
                 </SwitchTransition>

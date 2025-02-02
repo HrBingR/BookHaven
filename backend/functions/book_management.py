@@ -28,7 +28,6 @@ def user_logged_in():
     finally:
         session.close()
 
-
 def login_required(func=None, totp=False):
     """
     Decorator to check login status and enforce token type:
@@ -42,11 +41,9 @@ def login_required(func=None, totp=False):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Retrieve login status and token state
             user_login_status, message, token_state = user_logged_in()
             if not user_login_status:
                 logger.debug(message)
-            # If unauthenticated and ALLOW_UNAUTHENTICATED=False, deny immediately
             if not config.ALLOW_UNAUTHENTICATED and token_state == "no_token":
                 logger.debug("Unauthenticated access denied.")
                 return jsonify({
@@ -57,28 +54,16 @@ def login_required(func=None, totp=False):
                 return jsonify({
                     "error": "TOTP verification requires authentication."
                 }), 401
-
-            # Enforce token type checks when a valid token is provided
             if token_state != "no_token":
-                # Extract the token type
                 token_type = token_state.get("token_type", None)
-
-                # Deny TOTP tokens unless explicitly allowed (totp=True)
                 if token_type == "totp" and not totp:
                     logger.debug("TOTP token detected, marking as no_token.")
                     token_state = "no_token"
-
-            # Pass the token state to the route if it's expecting it
             func_params = inspect.signature(func).parameters
             if 'token_state' in func_params:
                 return func(*args, token_state=token_state, **kwargs)
-
-            # Default: Run the function without token_state if not defined
             return func(*args, **kwargs)
-
         return wrapper
-
-    # Allow the decorator to be used without arguments for default behavior
     if func:
         return decorator(func)
     return decorator

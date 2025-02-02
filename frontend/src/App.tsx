@@ -11,12 +11,11 @@ import Login from './components/Login.tsx';
 import OTP from './components/Otp.tsx';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-// Define the type for token payload
 interface DecodedToken {
-  token_type: string; // "login" or "totp"
+  token_type: string;
   user_is_admin: boolean;
   user_id: number;
-  exp?: number;       // Optional: token expiration timestamp
+  exp?: number;
 }
 
 const App: React.FC = () => {
@@ -26,10 +25,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Decode the token to validate its type and state
       try {
         const decoded: DecodedToken = jwtDecode(token);
-        // Check for a valid login token
         if (decoded.token_type === 'login') {
           setIsLoggedIn(true);
         }
@@ -45,17 +42,14 @@ const App: React.FC = () => {
 
   const handleLogin = (token: string) => {
     try {
-      // Decode the token to verify its type
       const decoded: DecodedToken = jwtDecode(token);
 
       if (decoded.token_type === 'login') {
-        // Valid login token for general access
         localStorage.setItem('token', token);
         setIsLoggedIn(true);
       } else if (decoded.token_type === 'totp') {
-        // TOTP token found - enforce MFA completion
-        localStorage.setItem('token', token); // Save temporarily for OTP flow
-        setIsLoggedIn(false); // Ensure general access is not granted
+        localStorage.setItem('token', token);
+        setIsLoggedIn(false);
       } else {
         throw new Error('Unknown token type.');
       }
@@ -72,7 +66,6 @@ const App: React.FC = () => {
     window.location.reload(); // Optional: reload to reset state
   };
 
-  // Protected Route Component
   const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -97,12 +90,10 @@ const App: React.FC = () => {
           <Sidebar isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
           <div className="flex-grow-1 d-flex flex-column">
             <Routes>
-              {/* Define routes with proper access checks */}
               <Route path="/" element={<ProtectedRoute><Home isLoggedIn={isLoggedIn} /></ProtectedRoute>} />
               <Route path="/authors" element={<ProtectedRoute><Authors /></ProtectedRoute>} />
               <Route path="/authors/:authorName" element={<ProtectedRoute><AuthorPage isLoggedIn={isLoggedIn} /></ProtectedRoute>} />
               <Route path="/read/:identifier" element={<ProtectedRoute><Reader /></ProtectedRoute>} />
-              {/* Login and OTP routes */}
               <Route path="/login" element={<Login onLogin={handleLogin}/>} />
               <Route path="/otp" element={<OTP />} />
             </Routes>

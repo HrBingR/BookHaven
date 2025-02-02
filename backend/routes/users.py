@@ -59,7 +59,7 @@ def change_password(token_state):
 
 @users_bp.route('/user/enable-mfa', methods=['POST'])
 @login_required
-# @limiter.limit('2 per second')
+@limiter.limit('2 per second')
 def enable_mfa(token_state):
     logger.debug("Attempting to enable MFA")
     if token_state == "no_token":
@@ -93,7 +93,6 @@ def enable_mfa(token_state):
         "totp_provisioning_url": provisioning_url,
         "mfa_secret": mfa_secret_split
     }), 200
-
 
 @users_bp.route('/user/disable-mfa', methods=['DELETE'])
 @login_required

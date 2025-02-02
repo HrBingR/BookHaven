@@ -13,7 +13,7 @@ interface SearchBarProps {
     onFavoritesToggle: () => void;
     onFinishedToggle: () => void;
     onUnfinishedToggle: () => void;
-    isLoggedIn: boolean; // Determine if filter buttons should be shown
+    isLoggedIn: boolean;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -50,7 +50,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
     return (
         <Form onSubmit={handleSubmit}>
-            {/* Search bar row */}
             <div className="search-bar-container">
                 <InputGroup>
                     <FormControl
@@ -75,7 +74,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 </InputGroup>
             </div>
 
-            {/* Filter chips row */}
             {isLoggedIn && (
                 <div className="chips-container mt-2">
                     <ButtonGroup>

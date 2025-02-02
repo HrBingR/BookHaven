@@ -50,7 +50,7 @@ const AuthorGridCell: React.FC<AuthorGridCellProps> = ({
                             <Button
                                 variant={UI_BASE_COLOR}
                                 key={index}
-                                className="author-item link-button" // Add relevant button styles
+                                className="author-item link-button"
                                 onClick={() => navigate(`/authors/${author.replace(/\s+/g, '-').toLowerCase()}`)} // Navigate to the target URL
                             >
                                 {author}

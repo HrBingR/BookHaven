@@ -19,8 +19,6 @@ def str_to_bool(value):
             return False
     return False
 
-# Load environment variables from a .env file, if it exists
-
 class Config:
     def __init__(self):
 
