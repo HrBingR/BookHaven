@@ -36,5 +36,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     minify: mode === 'production', // Disable minification for dev builds
     sourcemap: mode !== 'production', // Enable source maps for easier debugging
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {}
+    }
   }
 }));
