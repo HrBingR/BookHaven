@@ -22,3 +22,14 @@ $theme-colors: map-merge($theme-colors, (
     color: #fff;
   }
 }
+
+.alert {
+  --bs-alert-padding-x: 0.75rem;
+  --bs-alert-padding-y: 0.375rem;
+  margin-bottom: 0;
+  margin-left: 10px;
+}
+
+.alert-dismissible .btn-close {
+  padding: 0.6rem 1rem;
+}
