@@ -9,7 +9,6 @@ import AuthorPage from './components/AuthorPage';
 import Reader from "./components/Reader.tsx";
 import Login from './components/Login.tsx';
 import OTP from './components/Otp.tsx';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 // Define the type for token payload
