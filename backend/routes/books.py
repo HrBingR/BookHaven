@@ -1,3 +1,4 @@
+from sqlalchemy import or_, and_
 from flask import Blueprint, request, jsonify, url_for
 from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
@@ -20,17 +21,15 @@ def get_books(token_state):
     offset = request.args.get('offset', 0, type=int)
     limit = request.args.get('limit', 18, type=int)
     favorites_queried = str_to_bool(request.args.get('favorites', False))
-    logger.debug(f"Favorites queried: {favorites_queried}")
     finished_queried = str_to_bool(request.args.get('finished', False))
-    logger.debug(f"Finished queried: {finished_queried}")
+    unfinished_queried = str_to_bool(request.args.get('unfinished', False))
+    logger.debug(request.args)
 
     session = get_session()
     try:
         books_query = session.query(EpubMetadata)
 
-        # Apply favorites filter if requested
-        if favorites_queried is True or finished_queried is True:
-            # Ensure user is logged in
+        if favorites_queried is True or finished_queried is True or unfinished_queried is True:
             if token_state == "no_token":
                 return jsonify({"error": "Unauthenticated access is not allowed"}), 401
 
@@ -40,25 +39,43 @@ def get_books(token_state):
             books_query_favorite = (
                 books_query.join(ProgressMapping, ProgressMapping.book_id == EpubMetadata.id)
                 .filter(
-                    ProgressMapping.user_id == user_id,  # Filter by logged-in user
-                    ProgressMapping.marked_favorite.is_(True)  # Only marked favorites
+                    ProgressMapping.user_id == user_id,
+                    ProgressMapping.marked_favorite.is_(True)
                 )
             )
 
             books_query_finished = (
                 books_query.join(ProgressMapping, ProgressMapping.book_id == EpubMetadata.id)
                 .filter(
-                    ProgressMapping.user_id == user_id,  # Filter by logged-in user
-                    ProgressMapping.is_finished.is_(True)  # Only marked favorites
+                    ProgressMapping.user_id == user_id,
+                    ProgressMapping.is_finished.is_(True)
+                )
+            )
+
+            books_query_unfinished = (
+                books_query
+                .outerjoin(
+                    ProgressMapping,
+                    and_(ProgressMapping.book_id == EpubMetadata.id, ProgressMapping.user_id == user_id)
+                )
+                .filter(
+                    or_(
+                        ProgressMapping.is_finished.is_(False),
+                        ProgressMapping.id.is_(None)  # no entry in ProgressMapping
+                    )
                 )
             )
 
             if favorites_queried is True and finished_queried is True:
                 books_query = books_query_favorite.union(books_query_finished)
+            elif favorites_queried is True and unfinished_queried is True:
+                books_query = books_query_favorite.union(books_query_unfinished)
             elif favorites_queried is True:
                 books_query = books_query_favorite
             elif finished_queried is True:
                 books_query = books_query_finished
+            elif unfinished_queried is True:
+                books_query = books_query_unfinished
 
             # Check if no favorites exist for this user
             if books_query.count() == 0:

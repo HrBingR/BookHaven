@@ -31,7 +31,7 @@ Built using a modern tech stack, the frontend leverages React with the react-rea
 - **Powerful Search**
   The search feature on the home page allows users to filter their library by author, book title, or series, helping locate specific content quickly.
 - **Filters**
-  Basic filters are made available to allow filtering for books marked as favorite, or books that have been marked as finished.
+  Basic filters are made available to allow filtering for books marked as favorite, as finished, or books that haven't been marked as finished.
 - **Author Page with Intuitive Navigation**
   A dedicated author page organizes authors into a clickable alphabetical grid. Users can click on a letter to expand its list of authors, navigate to an author's page, and view their books sorted alphabetically by series and standalone titles.
 - **Responsive Design**

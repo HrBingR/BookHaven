@@ -50,6 +50,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const [searchTerm, setSearchTerm] = useState<string>(''); // Tracks the search query
   const [favoritesQueried, setFavoritesQueried] = useState<boolean>(false);
   const [finishedQueried, setFinishedQueried] = useState<boolean>(false);
+  const [unfinishedQueried, setUnfinishedQueried] = useState<boolean>(false);
 
   const observerRef = useRef<IntersectionObserver | null>(null); // Reference to IntersectionObserver
   const triggerRef = useRef<HTMLDivElement | null>(null); // Reference to #scroll-trigger
@@ -63,6 +64,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
           limit,
           favorites: favoritesQueried,
           finished: finishedQueried,
+          unfinished: unfinishedQueried,
         },
       });
       console.log('API Response:', response);
@@ -151,6 +153,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               onSearch={handleSearch}
               favoritesActive={favoritesQueried}
               finishedActive={finishedQueried}
+              unFinishedActive={unfinishedQueried}
               onFavoritesToggle={() => {
                 setFavoritesQueried((prev) => !prev); // Toggle favorite filter
                 refreshBooks(); // Refresh books when toggled
@@ -158,6 +161,10 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               onFinishedToggle={() => {
                 setFinishedQueried((prev) => !prev); // Toggle finished filter
                 refreshBooks(); // Refresh books when toggled
+              }}
+              onUnfinishedToggle={() => {
+                setUnfinishedQueried((prev) => !prev);
+                refreshBooks();
               }}
               isLoggedIn={isLoggedIn}
           />

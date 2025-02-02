@@ -9,8 +9,10 @@ interface SearchBarProps {
     onSearch: (term: string) => void;
     favoritesActive: boolean;
     finishedActive: boolean;
+    unFinishedActive: boolean;
     onFavoritesToggle: () => void;
     onFinishedToggle: () => void;
+    onUnfinishedToggle: () => void;
     isLoggedIn: boolean; // Determine if filter buttons should be shown
 }
 
@@ -18,8 +20,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                                  onSearch,
                                                  favoritesActive,
                                                  finishedActive,
+                                                 unFinishedActive,
                                                  onFavoritesToggle,
                                                  onFinishedToggle,
+                                                 onUnfinishedToggle,
                                                  isLoggedIn }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [showAlert, setShowAlert] = useState(false);
@@ -86,6 +90,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
                             onClick={onFinishedToggle}
                         >
                             Finished
+                        </Button>
+                        <Button
+                            variant={unFinishedActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
+                            onClick={onUnfinishedToggle}
+                        >
+                            Unfinished
                         </Button>
                     </ButtonGroup>
                     {showAlert && <Alert variant="success" onClose={() => setShowAlert(false)} dismissible>{alertMessage}</Alert>}
