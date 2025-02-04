@@ -1,3 +1,5 @@
+import base64
+
 from flask import request, jsonify, make_response
 from bcrypt import checkpw
 import jwt
@@ -6,11 +8,13 @@ from flask import Blueprint
 from config.config import config
 from config.logger import logger
 from functions.book_management import login_required
-from functions.utils import decrypt_totp_secret
+from functions.utils import decrypt_totp_secret, hash_password
 from functions.auth import verify_token
 from models.users import Users
 from functions.db import get_session
 import pyotp
+from urllib.parse import urlparse
+from sqlalchemy import func
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,6 +25,20 @@ def generate_token(user_id, user_is_admin, user_email):
             'user_id': user_id,
             'user_is_admin':user_is_admin,
             'user_email':user_email,
+            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
+        },
+        config.SECRET_KEY,
+        algorithm='HS256'
+    )
+
+def generate_cf_token(user_id, user_is_admin, user_email, cf_iss):
+    return jwt.encode(
+        {
+            'token_type': "login",
+            'user_id': user_id,
+            'user_is_admin':user_is_admin,
+            'user_email':user_email,
+            'iss':cf_iss,
             'exp': datetime.now(timezone.utc) + timedelta(hours=24)
         },
         config.SECRET_KEY,
@@ -38,6 +56,42 @@ def generate_totp_token(user_id):
         algorithm='HS256'
     )
 
+def cf_login(session):
+    cf_cookie = request.cookies.get('CF_Authorization')
+    if not cf_cookie:
+        return jsonify({"error": "No data in CF_Authorization cookie, of CF_Authorization cookie missing"}), 400
+    try:
+        decoded_payload = jwt.decode(cf_cookie, options={"verify_signature": False})
+        cf_email = decoded_payload.get("email")
+        iss = decoded_payload.get("iss")
+        cf_password = decoded_payload.get("identity_nonce")
+        netloc = urlparse(iss).netloc
+        team_name = netloc.split('.')[0]
+        if team_name != config.CF_ACCESS_TEAM_NAME:
+            return jsonify(
+                {"error": "CF_ACCESS_TEAM_NAME does not match the team name from the CF_Authorization cookie."}), 400
+        cf_username = cf_email.split('@')[0]
+        cf_user = session.query(Users).filter(func.lower(Users.username) == func.lower(cf_username)).first()
+        if not cf_user:
+            cf_user = session.query(Users).filter(func.lower(Users.email) == func.lower(cf_email)).first()
+            if not cf_user:
+                hashed_password = hash_password(cf_password)
+                cf_user = Users(
+                    username=cf_username,
+                    email=cf_email,
+                    password_hash=hashed_password
+                )
+                session.add(cf_user)
+                session.commit()
+        token = generate_cf_token(user_id=cf_user.id, user_is_admin=cf_user.is_admin, user_email=cf_user.email, cf_iss=iss)
+        return jsonify({'token': token}), 200
+    except Exception as e:
+        logger.error(f"Error during login: {str(e)}")
+        session.rollback()
+        return make_response(jsonify({'error': 'Internal server error'}), 500)
+    finally:
+        session.close()
+
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -45,6 +99,8 @@ def login():
     password = data.get('password')
     session = get_session()
     try:
+        if config.CF_ACCESS_AUTH:
+            return cf_login(session)
         if not username or not password:
             logger.debug(f"Username or password not submitted.")
             return make_response(jsonify({'error': 'Missing username or password'}), 400)
