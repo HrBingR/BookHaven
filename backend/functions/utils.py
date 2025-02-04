@@ -6,15 +6,13 @@ import bcrypt
 import re
 from flask import current_app
 
-def check_required_envs(secret_key: str, base_url: str, cf_auth: str, cf_team: str) -> tuple[bool, str]:
+def check_required_envs(secret_key: str, base_url: str) -> tuple[bool, str]:
     if not secret_key:
         return False, "SECRET_KEY environment variable is not set. Generate one (bash) using: openssl rand -hex 32"
     if len(secret_key) != 64:
         return False, "SECRET_KEY environment variable is invalid. Generate one (bash) using: openssl rand -hex 32"
     if not base_url:
         return False, "BASE_URL is not set. Please set this to your application's base URL"
-    if cf_auth and not cf_team:
-        return False, "CF_ACCESS_AUTH is enabled but no CF_ACCESS_TEAM_NAME has been provided"
     return True, "Required environment variables are set."
 
 def hash_password(password: str) -> str:

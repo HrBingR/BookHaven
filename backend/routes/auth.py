@@ -66,10 +66,6 @@ def cf_login(session):
         iss = decoded_payload.get("iss")
         cf_password = decoded_payload.get("identity_nonce")
         netloc = urlparse(iss).netloc
-        team_name = netloc.split('.')[0]
-        if team_name != config.CF_ACCESS_TEAM_NAME:
-            return jsonify(
-                {"error": "CF_ACCESS_TEAM_NAME does not match the team name from the CF_Authorization cookie."}), 400
         cf_username = cf_email.split('@')[0]
         cf_user = session.query(Users).filter(func.lower(Users.username) == func.lower(cf_username)).first()
         if not cf_user:

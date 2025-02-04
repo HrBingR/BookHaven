@@ -13,7 +13,7 @@ def init_rate_limit(app):
 
 def init_env():
     try:
-        result, message = check_required_envs(config.SECRET_KEY, config.BASE_URL, config.CF_ACCESS_AUTH, config.CF_ACCESS_TEAM_NAME)
+        result, message = check_required_envs(config.SECRET_KEY, config.BASE_URL)
         if not result:
             logger.error(message)
             sys.exit(1)
