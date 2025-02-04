@@ -5,6 +5,7 @@ import { fetchApiConfig } from '../utilities/fetchApiConfig'; // Import your hel
 // Define the Config interface
 export interface ConfigContextType {
     UI_BASE_COLOR: string;
+    CF_ACCESS_AUTH: boolean;
 }
 
 // Create Context
