@@ -4,6 +4,7 @@ from functions.utils import check_admin_user, reset_admin_user_password, check_r
 from config.config import config
 from config.logger import logger
 import base64
+from authlib.integrations.flask_client import OAuth, OAuthError
 
 def init_rate_limit(app):
     if config.ENVIRONMENT != "test":
@@ -13,7 +14,7 @@ def init_rate_limit(app):
 
 def init_env():
     try:
-        result, message = check_required_envs(config.SECRET_KEY, config.BASE_URL)
+        result, message = check_required_envs(config.SECRET_KEY, config.BASE_URL, config.OIDC_ENABLED)
         if not result:
             logger.error(message)
             sys.exit(1)
@@ -52,3 +53,21 @@ def init_encryption(app):
     key_bytes = binascii.unhexlify(config.SECRET_KEY)
     fernet_key = base64.urlsafe_b64encode(key_bytes)
     app.config["FERNET_KEY"] = fernet_key
+
+def init_oauth(app):
+    if config.OIDC_ENABLED:
+        try:
+            oauth = OAuth(app)
+            oauth.register(
+                name=config.OIDC_PROVIDER,
+                client_id=config.OIDC_CLIENT_ID,
+                client_secret=config.OIDC_CLIENT_SECRET,
+                server_metadata_url=config.OIDC_METADATA_ENDPOINT,
+                client_kwargs={"scope": "openid email profile"}
+            )
+            return oauth
+        except OAuthError as e:
+            logger.exception(f"Could not instantiate OIDC configuration; Exception occurred: {e}")
+        except Exception as e:
+            logger.exception(f"Could not instantiate OIDC configuration; Exception occurred: {e}")
+    return None

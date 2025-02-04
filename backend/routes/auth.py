@@ -1,10 +1,8 @@
-import base64
-
 from flask import request, jsonify, make_response
 from bcrypt import checkpw
 import jwt
 from datetime import datetime, timezone, timedelta
-from flask import Blueprint
+from flask import Blueprint, current_app, url_for
 from config.config import config
 from config.logger import logger
 from functions.book_management import login_required
@@ -56,6 +54,9 @@ def generate_totp_token(user_id):
         algorithm='HS256'
     )
 
+# @auth_bp.route('/oidc-auth', methods=['GET'])
+# def oidc_auth():
+
 def cf_login(session):
     cf_cookie = request.cookies.get('CF_Authorization')
     if not cf_cookie:
@@ -95,6 +96,9 @@ def login():
     password = data.get('password')
     session = get_session()
     try:
+        if config.OIDC_ENABLED:
+            redirect_uri = url_for("auth_bp.oidc_auth", _external=True)
+            return current_app.oauth[config.OIDC_PROVIDER].authorize_redirect(redirect_uri)
         if config.CF_ACCESS_AUTH:
             cloudflare_login_response, cloudflare_login_status = cf_login(session)
             cloudflare_login_response_json_data = cloudflare_login_response.get_json()

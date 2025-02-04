@@ -5,14 +5,24 @@ from email_validator import validate_email, EmailNotValidError
 import bcrypt
 import re
 from flask import current_app
+from config.config import config
 
-def check_required_envs(secret_key: str, base_url: str) -> tuple[bool, str]:
+def check_required_envs(secret_key: str, base_url: str, oidc_enabled: bool) -> tuple[bool, str]:
     if not secret_key:
         return False, "SECRET_KEY environment variable is not set. Generate one (bash) using: openssl rand -hex 32"
     if len(secret_key) != 64:
         return False, "SECRET_KEY environment variable is invalid. Generate one (bash) using: openssl rand -hex 32"
     if not base_url:
         return False, "BASE_URL is not set. Please set this to your application's base URL"
+    if oidc_enabled:
+        if not config.OIDC_PROVIDER:
+            return False, "OIDC_ENABLED is True but OIDC_PROVIDER is not configured."
+        if not config.OIDC_CLIENT_ID:
+            return False, "OIDC_ENABLED is True but OIDC_CLIENT_ID is not configured."
+        if not config.OIDC_CLIENT_SECRET:
+            return False, "OIDC_ENABLED is True but OIDC_CLIENT_SECRET is not configured."
+        if not config.OIDC_METADATA_ENDPOINT:
+            return False, "OIDC_ENABLED is True but OIDC_METADATA_ENDPOINT is not configured."
     return True, "Required environment variables are set."
 
 def hash_password(password: str) -> str:

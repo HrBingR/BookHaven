@@ -34,9 +34,11 @@ class Config:
         self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', "false"))
         self.ALLOW_UNAUTHENTICATED = str_to_bool(os.getenv('ALLOW_UNAUTHENTICATED', "false"))
 
-        # self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
-        # self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
-        # self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
+        self.OIDC_ENABLED = str_to_bool(os.getenv('OIDC_ENABLED', "false"))
+        self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
+        self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
+        self.OIDC_PROVIDER = os.getenv('OIDC_PROVIDER', None)
+        self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
 
         self.REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         self.REDIS_PORT = os.getenv('REDIS_PORT', '6379')
