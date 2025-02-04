@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import {BrowserRouter as Router, Route, Routes, Navigate} from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import Sidebar from './components/Sidebar';
 import Home from './components/Home';
@@ -10,6 +10,7 @@ import Reader from "./components/Reader.tsx";
 import Login from './components/Login.tsx';
 import OTP from './components/Otp.tsx';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { useConfig } from './context/ConfigProvider';
 
 interface DecodedToken {
   token_type: string;
@@ -18,9 +19,18 @@ interface DecodedToken {
   exp?: number;
 }
 
+interface DecodedCFToken {
+  token_type: string;
+  user_is_admin: boolean;
+  user_id: number;
+  iss: string;
+  exp?: number;
+}
+
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const { CF_ACCESS_AUTH } = useConfig();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -61,9 +71,27 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
-    window.location.reload(); // Optional: reload to reset state
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // No token found, just do your standard logout flow
+      setIsLoggedIn(false);
+      return;
+    }
+    console.log(CF_ACCESS_AUTH)
+    if (CF_ACCESS_AUTH) {
+      const cf_auth_token_decoded: DecodedCFToken = jwtDecode(token);
+      console.log(cf_auth_token_decoded)
+      const baseUrl = cf_auth_token_decoded.iss.endsWith('/') ? cf_auth_token_decoded.iss.slice(0, -1) : cf_auth_token_decoded.iss;
+      const logoutUrl = `${baseUrl}/cdn-cgi/access/logout`;
+      console.log(`redirecting to: ${logoutUrl}`)
+      window.location.href = logoutUrl
+      // localStorage.removeItem('token');
+      // setIsLoggedIn(false);
+    } else {
+      localStorage.removeItem('token');
+      setIsLoggedIn(false);
+      // window.location.reload(); // Optional: reload to reset state
+    }
   };
 
   const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
