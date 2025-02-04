@@ -32,7 +32,9 @@ def react_frontend_config():
         'cyan': 'cyan'
     }
     color = color_variants.get(config.UI_BASE_COLOR, "success")
+    cloudflare = config.CF_ACCESS_AUTH
     react_config = {
-        "UI_BASE_COLOR": color
+        "UI_BASE_COLOR": color,
+        "CF_ACCESS_AUTH": cloudflare
     }
     return jsonify(react_config), 200
