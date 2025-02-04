@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../utilities/apiClient';
@@ -15,7 +15,29 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const { UI_BASE_COLOR } = useConfig();
+    const { UI_BASE_COLOR, CF_ACCESS_AUTH } = useConfig();
+
+    const autoLogin = async () => {
+        try {
+            setError(null);
+            // For example, call an endpoint that returns a Cloudflare-style token
+            // or do any logic required to skip manual login
+            const response = await apiClient.post('/login', {});
+            const token = response.data.token;
+            onLogin(token);
+            // Then navigate just like normal
+            navigate('/');
+        } catch (err: any) {
+            setError('Auto-login failed');
+        }
+    };
+
+    useEffect(() => {
+        if (CF_ACCESS_AUTH) {
+            autoLogin();
+        }
+    }, [CF_ACCESS_AUTH]);
+
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
