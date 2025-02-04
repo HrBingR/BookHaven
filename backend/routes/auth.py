@@ -96,7 +96,11 @@ def login():
     session = get_session()
     try:
         if config.CF_ACCESS_AUTH:
-            return cf_login(session)
+            cloudflare_login_response, cloudflare_login_status = cf_login(session)
+            cloudflare_login_response_json_data = cloudflare_login_response.get_json()
+            if cloudflare_login_status == 200:
+                return cloudflare_login_response, cloudflare_login_status
+            logger.error(f"Attempt to use CF_ACCESS_AUTH failed: {cloudflare_login_response_json_data["error"]}")
         if not username or not password:
             logger.debug(f"Username or password not submitted.")
             return make_response(jsonify({'error': 'Missing username or password'}), 400)
@@ -117,7 +121,6 @@ def login():
                 session.commit()
             ip_address = request.remote_addr
             logger.warning(f"Failed login attempt for username/email: {username} from IP: {ip_address}")
-            logger.debug(f"{password} was the PW used, result of checkpw: {checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8'))}")
             return make_response(jsonify({'error': 'Invalid credentials'}), 401)
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
