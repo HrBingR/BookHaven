@@ -135,12 +135,18 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                 return (
                     <div>
                         <h5>User Management</h5>
+                        <p
+                            style={{ color: "grey" }}
+                        >
+                            Note: To change email address, and to reset password or MFA status, users must be unlinked from OIDC
+                        </p>
                         <Table striped bordered hover>
                             <thead>
                             <tr>
                                 <th>UID</th>
                                 <th>Created At</th>
                                 <th>Last Login</th>
+                                <th>Auth Type</th>
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>Admin Status</th>
@@ -155,6 +161,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                     <td>{user.id}</td>
                                     <td>{user.created_at}</td>
                                     <td>{user.last_login}</td>
+                                    <td>{user.auth_type}</td>
                                     <td>{user.username}</td>
                                     <td>
                                         <Button
@@ -165,6 +172,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                                 setEmail(user.email);
                                                 setView('change-email');
                                             }}
+                                            disabled={user.auth_type === 'oidc'}
                                         >
                                             {user.email}
                                         </Button>
@@ -190,6 +198,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                                 setSelectedUserId(user.id);
                                                 setView('reset-password');
                                             }}
+                                            disabled={user.auth_type === 'oidc'}
                                         >
                                             Reset
                                         </Button>
@@ -202,6 +211,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                                 setSelectedUserId(user.id);
                                                 handleMfaReset();
                                             }}
+                                            disabled={user.auth_type === 'oidc'}
                                         >
                                             Reset
                                         </Button>
@@ -214,7 +224,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                                 setSelectedUserId(user.id);
                                                 handleDeleteUser();
                                             }}
-                                            >
+                                        >
                                             Delete
                                         </Button>
                                     </td>
