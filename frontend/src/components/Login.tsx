@@ -15,7 +15,26 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const { UI_BASE_COLOR, CF_ACCESS_AUTH } = useConfig();
+    const { UI_BASE_COLOR, CF_ACCESS_AUTH, OIDC_ENABLED } = useConfig();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        // If there's a token param, handle it
+        const tokenFromUrl = params.get('token');
+        if (tokenFromUrl) {
+            onLogin(tokenFromUrl);
+            // Possibly navigate away if you want to hide the Login modal
+            navigate('/');
+        }
+
+        // If there's an error param, display it
+        const errorFromUrl = params.get('error');
+        if (errorFromUrl) {
+            setError(errorFromUrl);
+        }
+    }, [onLogin, navigate, setError]);
+
 
     const autoLogin = async () => {
         try {
@@ -38,6 +57,14 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
         }
     }, [CF_ACCESS_AUTH]);
 
+    const handleOidc = async () => {
+        try {
+            setError(null);
+            window.location.replace('/login/oidc')
+        } catch (err: any) {
+            setError('Auto-login failed');
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -71,37 +98,46 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
     };
 
     return (
-        <Modal show={true} centered>
-            <Modal.Header>
-                <Modal.Title>Login</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form onSubmit={handleSubmit}>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Username</Form.Label>
-                        <Form.Control
-                            type="text"
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control
-                            type="password"
-                            placeholder="Enter password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </Form.Group>
-                    {error && <div className="text-danger mb-3">{error}</div>}
-                    <Button variant={UI_BASE_COLOR} type="submit" className="w-100">
-                        Submit
-                    </Button>
-                </Form>
-            </Modal.Body>
-        </Modal>
+        <>
+            { !CF_ACCESS_AUTH && (
+                <Modal show={true} centered>
+                    <Modal.Header>
+                        <Modal.Title>Login</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form onSubmit={handleSubmit}>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Username</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>Password</Form.Label>
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Enter password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </Form.Group>
+                            {error && <div className="text-danger mb-3">{error}</div>}
+                            <Button variant={UI_BASE_COLOR} type="submit" className="w-100">
+                                Submit
+                            </Button>
+                            {OIDC_ENABLED && (
+                                <Button variant={UI_BASE_COLOR} className="w-100" onClick={handleOidc} style={{ marginTop: 10 }}>
+                                    OIDC Login
+                                </Button>
+                            )}
+                        </Form>
+                    </Modal.Body>
+                </Modal>
+            )}
+        </>
     );
 };
 

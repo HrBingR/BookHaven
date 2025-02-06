@@ -1,10 +1,14 @@
 import binascii
+from flask import Flask
 import sys
 from functions.utils import check_admin_user, reset_admin_user_password, check_required_envs
 from config.config import config
 from config.logger import logger
 import base64
 from authlib.integrations.flask_client import OAuth, OAuthError
+
+class CustomFlask(Flask):
+    oauth: OAuth
 
 def init_rate_limit(app):
     if config.ENVIRONMENT != "test":

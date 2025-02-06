@@ -33,8 +33,10 @@ def react_frontend_config():
     }
     color = color_variants.get(config.UI_BASE_COLOR, "success")
     cloudflare = config.CF_ACCESS_AUTH
+    oidc = config.OIDC_ENABLED
     react_config = {
         "UI_BASE_COLOR": color,
-        "CF_ACCESS_AUTH": cloudflare
+        "CF_ACCESS_AUTH": cloudflare,
+        "OIDC_ENABLED": oidc
     }
     return jsonify(react_config), 200

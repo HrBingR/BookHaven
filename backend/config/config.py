@@ -39,6 +39,8 @@ class Config:
         self.OIDC_CLIENT_SECRET = os.getenv('OIDC_CLIENT_SECRET', None)
         self.OIDC_PROVIDER = os.getenv('OIDC_PROVIDER', None)
         self.OIDC_METADATA_ENDPOINT = os.getenv('OIDC_METADATA_ENDPOINT', None)
+        self.OIDC_AUTO_REGISTER_USER = str_to_bool(os.getenv('OIDC_AUTO_REGISTER_USER', 'false'))
+        self.OIDC_AUTO_LINK_USER = str_to_bool(os.getenv('OIDC_AUTO_LINK_USER', 'false'))
 
         self.REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         self.REDIS_PORT = os.getenv('REDIS_PORT', '6379')

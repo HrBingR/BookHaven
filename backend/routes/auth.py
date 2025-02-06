@@ -1,20 +1,31 @@
-from flask import request, jsonify, make_response
-from bcrypt import checkpw
 import jwt
+import pyotp
+from functions.init import CustomFlask
+from typing import cast
+from flask import request, jsonify, make_response, redirect, Blueprint, current_app, url_for
+from bcrypt import checkpw
 from datetime import datetime, timezone, timedelta
-from flask import Blueprint, current_app, url_for
 from config.config import config
 from config.logger import logger
 from functions.book_management import login_required
 from functions.utils import decrypt_totp_secret, hash_password
 from functions.auth import verify_token
-from models.users import Users
 from functions.db import get_session
-import pyotp
-from urllib.parse import urlparse
+from models.users import Users
 from sqlalchemy import func
 
 auth_bp = Blueprint('auth', __name__)
+
+def get_oauth():
+    app = cast(CustomFlask, current_app)
+    oauth = app.oauth
+    return oauth
+
+def create_oidc_client():
+    provider_name = config.OIDC_PROVIDER
+    oauth = get_oauth()
+    client = oauth.create_client(provider_name)
+    return client
 
 def generate_token(user_id, user_is_admin, user_email):
     return jwt.encode(
@@ -54,9 +65,6 @@ def generate_totp_token(user_id):
         algorithm='HS256'
     )
 
-# @auth_bp.route('/oidc-auth', methods=['GET'])
-# def oidc_auth():
-
 def cf_login(session):
     cf_cookie = request.cookies.get('CF_Authorization')
     if not cf_cookie:
@@ -66,7 +74,6 @@ def cf_login(session):
         cf_email = decoded_payload.get("email")
         iss = decoded_payload.get("iss")
         cf_password = decoded_payload.get("identity_nonce")
-        netloc = urlparse(iss).netloc
         cf_username = cf_email.split('@')[0]
         cf_user = session.query(Users).filter(func.lower(Users.username) == func.lower(cf_username)).first()
         if not cf_user:
@@ -96,9 +103,6 @@ def login():
     password = data.get('password')
     session = get_session()
     try:
-        if config.OIDC_ENABLED:
-            redirect_uri = url_for("auth_bp.oidc_auth", _external=True)
-            return current_app.oauth[config.OIDC_PROVIDER].authorize_redirect(redirect_uri)
         if config.CF_ACCESS_AUTH:
             cloudflare_login_response, cloudflare_login_status = cf_login(session)
             cloudflare_login_response_json_data = cloudflare_login_response.get_json()
@@ -111,6 +115,9 @@ def login():
         user = session.query(Users).filter(Users.username == username).first()
         if not user:
             user = session.query(Users).filter(Users.email == username).first()
+        if user.auth_type == "oidc":
+            if not user.is_admin:
+                return jsonify({"error": "OIDC user cannot log in with username and password"})
         if user and checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
             if not user.mfa_enabled:
                 user.last_login = datetime.now(timezone.utc)
@@ -206,3 +213,64 @@ def validate_otp():
         return jsonify({"error": "Internal server error"}), 500
     finally:
         session.close()
+
+@auth_bp.route('/login/oidc', methods=['GET'])
+def oidc_login():
+    client = create_oidc_client()
+    if not client:
+        return jsonify({'error': 'OIDC not configured'}), 400
+    redirect_uri = url_for('auth.oidc_callback', _external=True)
+    return client.authorize_redirect(redirect_uri)
+
+def check_oidc_user(userinfo):
+    session = get_session()
+    if not userinfo:
+        return jsonify({"error": "No userinfo retrieved from OIDC provider"}), 400
+    try:
+        user_by_id = session.query(Users).filter(Users.oidc_user_id == userinfo['sub']).first()
+        if not user_by_id:
+            user_by_email = session.query(Users).filter(Users.email == userinfo['email']).first()
+            if not user_by_email:
+                if config.OIDC_AUTO_REGISTER_USER:
+                    username = userinfo['email'].split('@')[0]
+                    user = Users(
+                        username=username,  # or generate username
+                        email=userinfo['email'],
+                        oidc_user_id=userinfo['sub'],
+                        auth_type='oidc'
+                    )
+                    session.add(user)
+                    session.commit()
+                    new_user = session.query(Users).get(user.id)
+                    token = generate_token(user_id=new_user.id, user_is_admin=new_user.is_admin, user_email=new_user.email)
+                    return jsonify({"token": token}), 200
+                return jsonify({"error": "OIDC_AUTO_REGISTER_USER is disabled. Unauthorized."}), 401
+            if config.OIDC_AUTO_LINK_USER:
+                user_by_email.auth_type = "oidc"
+                user_by_email.oidc_user_id = userinfo['sub']
+                session.commit()
+                token = generate_token(user_id=user_by_email.id, user_is_admin=user_by_email.is_admin, user_email=user_by_email.email)
+                return jsonify({"token": token}), 200
+            return jsonify({"error": "OIDC_AUTO_LINK_USER is disabled. Unauthorized."}), 401
+        token = generate_token(user_id=user_by_id.id, user_is_admin=user_by_id.is_admin, user_email=user_by_id.email)
+        return jsonify({"token": token}), 200
+    except Exception as e:
+        session.rollback()
+        logger.exception(f"Exception checking oidc user: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        session.close()
+
+@auth_bp.route('/login/oidc/callback', methods=['GET'])
+def oidc_callback():
+    client = create_oidc_client()
+    oidc_token = client.authorize_access_token()
+    userinfo = oidc_token['userinfo']
+    oidc_user_response, oidc_user_status = check_oidc_user(userinfo)
+    frontend_url = url_for("react.serve_react_app", path="/login", _external=True)
+    response_json = oidc_user_response.get_json()
+    if oidc_user_status == 200:
+        token = response_json['token']
+        return redirect(f"{frontend_url}?token={token}")
+    error_response = response_json['error']
+    return redirect(f"{frontend_url}?error={error_response}")
