@@ -1,9 +1,14 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum, Index
 from models.base import Base
 
 class Users(Base):
     __tablename__ = 'users'
+    __table_args__ = (
+        Index('ix_users_id', 'id'),
+        Index('ix_users_email', 'email'),
+        Index('ix_users_oidc_user_id', 'oidc_user_id'),
+    )
 
     id = Column(Integer, primary_key=True)
     username = Column(String(255), unique=True, nullable=False)
@@ -19,3 +24,4 @@ class Users(Base):
     mfa_enabled = Column(Boolean, default=False, nullable=False)
     mfa_secret = Column(String(255), nullable=True)
     last_used_otp = Column(String(8), nullable=True)
+
