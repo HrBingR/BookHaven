@@ -44,6 +44,10 @@ Built using a modern tech stack, the frontend leverages React with the react-rea
   Python Flask is used as the backend framework, coupled with Gunicorn as the lightweight web server for efficient request handling, and Celery to perform asynchronous tasks.
 - **Supports Multiple Databases**
   Compatible with MySQL, PostgreSQL, or SQLite for storing metadata.
+- **Supports CloudFlare Access**
+  Has a flag to bypass the login screen when making use of CloudFlare Access. See `.env.example` for details.
+- **OIDC Support**
+  Allows for the configuration of OIDC for new user registration, and for existing users.
 
 ## Deployment
 ### Docker
@@ -141,3 +145,8 @@ In the root project directory (BookHaven), run:
    docker build -t tag:version .
 ```
 Replace `tag:version` with your preferred image name and version (e.g., `bookhaven:1.0.0`).
+
+Change log:
+
+- v1.0.x - Initial Release
+- v1.1.0 - Added OIDC support
