@@ -95,22 +95,26 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
                         {books.map((book) => (
                             <Col
                                 key={book.id}
-                                sm={12}
-                                md={6}
-                                lg={books.length <= 3 ? 2 : 2}
+                                sm={6}
+                                md={4}
+                                lg={3}
+                                xl={3}
+                                xxl={2}
                                 className="mb-4 card-column"
                             >
                                 <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} />
                             </Col>
                         ))}
-                        {books.length < 3 &&
+                        {books.length < 4 &&
                             Array.from({ length: 7 - books.length }, (_, index) => (
                                 <Col
                                     key={`placeholder-${index}`}
                                     sm={12}
                                     md={6}
                                     lg={4}
-                                    className="mb-4 placeholder-col"
+                                    xl={3}
+                                    xxl={2}
+                                    className="mb-4 placeholder-col card-column"
                                 >
                                     <div className="placeholder-div"></div>
                                 </Col>
