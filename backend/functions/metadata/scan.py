@@ -25,6 +25,8 @@ def extract_metadata(epub_path, base_directory):
         unique_id = re.sub(r'[^a-zA-Z0-9]', '-', unique_id)
         unique_id = re.sub(r'-+', '-', unique_id)
     title = book.title
+    if not unique_id.strip():
+        unique_id = title
     authors = book.author_list
     series = book.series or ''
     seriesindex = book.series_index if book.series_index is not None else 0.0
@@ -73,6 +75,7 @@ def scan_and_store_metadata(base_directory):
         for epub_path in epubs:
             metadata = extract_metadata(epub_path, base_directory)
             unique_id = metadata['identifier']
+            logger.debug(f"Book Title: {metadata['title']}")
 
             filesystem_identifiers.add(unique_id)
 
@@ -95,6 +98,9 @@ def scan_and_store_metadata(base_directory):
                     cover_media_type=metadata['cover_media_type']
                 )
                 session.add(new_entry)
+                if not new_entry.identifier.strip():
+                    session.flush()
+                    new_entry.identifier = new_entry.title
                 logger.debug(f"Stored new metadata in DB for identifier={unique_id}")
         if config.ENVIRONMENT != "test":
             remove_missing_files(session, db_identifiers, filesystem_identifiers)
