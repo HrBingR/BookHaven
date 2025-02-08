@@ -7,6 +7,7 @@ NUM_WORKERS="${WORKERS:-1}"
 ENABLE_HTTPS="${ENABLE_HTTPS:-false}"
 SSL_CERT_FILE="/ssl/${SSL_CERT_FILE:-}"
 SSL_KEY_FILE="/ssl/${SSL_KEY_FILE:-}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
 
 echo "Checking and applying database migrations..."
 if ! python migrations.py; then
@@ -28,7 +29,7 @@ else
 fi
 
 echo "Starting Celery and Celery Beat..."
-celery -A celery_app.celery worker --loglevel=info > /var/log/celery-worker.log 2>&1 &
-celery -A celery_app.celery beat --loglevel=info > /var/log/celery-worker.log 2>&1 &
+celery -A celery_app.celery worker --loglevel="$LOG_LEVEL" &
+celery -A celery_app.celery beat --loglevel="$LOG_LEVEL" &
 
 wait
