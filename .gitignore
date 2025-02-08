@@ -1,3 +1,4 @@
 compose.yml
 .env
 project_roadmap.md
+dbuild.sh
