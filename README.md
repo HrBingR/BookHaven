@@ -16,8 +16,6 @@ BookHaven scans and manages your local library of EPUB ebooks, and allows you to
 Built using a modern tech stack, the frontend leverages React with the react-reader library to render and display EPUB files seamlessly in the browser, while the backend operates on Python Flask with Gunicorn as the web server. The application provides smooth animations, a clean UI, and robust performance—offering a great reading experience for all users.
 
 ## Features
-- **Fast and Lightweight**
-  Built with React and Flask, the app provides excellent performance and a responsive, smooth experience on any device.
 - **Read eBooks in the Browser**
   Users can access and read their EPUB-formatted eBooks directly without any additional software.
 - **Download eBooks**
@@ -34,16 +32,6 @@ Built using a modern tech stack, the frontend leverages React with the react-rea
   Basic filters are made available to allow filtering for books marked as favorite, as finished, or books that haven't been marked as finished.
 - **Author Page with Intuitive Navigation**
   A dedicated author page organizes authors into a clickable alphabetical grid. Users can click on a letter to expand its list of authors, navigate to an author's page, and view their books sorted alphabetically by series and standalone titles.
-- **Responsive Design**
-  Fully optimized for both desktop and mobile devices, ensuring a seamless experience across screen sizes.
-- **Fluid Animations**
-  Smooth and visually pleasing animations enhance navigation and interaction with the application.
-- **React Reader Integration**
-  Uses the react-reader library to render EPUB files in the browser, supporting adjustable font sizes and progress saving.
-- **Modern Backend**
-  Python Flask is used as the backend framework, coupled with Gunicorn as the lightweight web server for efficient request handling, and Celery to perform asynchronous tasks.
-- **Supports Multiple Databases**
-  Compatible with MySQL, PostgreSQL, or SQLite for storing metadata.
 - **Supports CloudFlare Access**
   Has a flag to bypass the login screen when making use of CloudFlare Access. See `.env.example` for details.
 - **OIDC Support**
