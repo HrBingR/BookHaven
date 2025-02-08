@@ -4,4 +4,5 @@ backend/apply_env.sh
 **/__pycache__
 **/*.pyc
 **/*.pyo
+backend/tests
 frontend/node_modules
