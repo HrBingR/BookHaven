@@ -50,6 +50,16 @@ Built using a modern tech stack, the frontend leverages React with the react-rea
   Allows for the configuration of OIDC for new user registration, and for existing users.
 
 ## Deployment
+
+### Requirements
+
+At a minimum to run the application you require:
+
+- A database (MySQL, SQLite, PostgreSQL)
+- A Redis instance
+
+For quick and easy deployment the .compose.yml.example defines both of these already.
+
 ### Docker
 Follow these steps to deploy the application with Docker Compose:
 1. **Download Configuration Files**
