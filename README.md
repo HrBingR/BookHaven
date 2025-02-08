@@ -1,4 +1,7 @@
 # BookHaven
+
+![BookHaven Home](./bookhaven_home.png)
+
 ## Table of Contents
 1. [What the Application Does]()
 2. [Features]()
