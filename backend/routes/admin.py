@@ -3,7 +3,7 @@ from functions.db import get_session
 from functools import wraps
 import random
 import string
-from functions.utils import hash_password, check_pw_complexity
+from functions.utils import hash_password, check_pw_complexity, unlink_oidc
 from functions.auth import verify_token
 from models.users import Users
 from config.logger import logger
@@ -248,3 +248,12 @@ def delete_user(user_id):
         return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
+
+@admin_bp.route('/users/<int:user_id>/unlink-oidc', methods=['PATCH'])
+@admin_required
+def unlink_oidc_admin(user_id):
+    if user_id <= 0:
+        return jsonify({"error": "Invalid user ID."}), 400
+    unlink_response, unlink_status = unlink_oidc(user_id)
+
+    return unlink_response, unlink_status
