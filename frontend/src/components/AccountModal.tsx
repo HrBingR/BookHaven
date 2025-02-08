@@ -11,15 +11,16 @@ type AccountModalProps = {
 };
 
 const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
-    const [view, setView] = useState<'main' | 'change-password' | 'mfa-setup'>('main');
+    const [view, setView] = useState<'main' | 'change-password' | 'mfa-setup' | 'link-oidc' | 'unlink-oidc'>('main');
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [passwordError, setPasswordError] = useState<string | null>(null);
-    const [mfaError, setMfaError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [otp, setOtp] = useState('');
     const [provisioningUrl, setProvisioningUrl] = useState('');
     const [mfaSecret, setMfaSecret] = useState('');
     const [isMfaEnabled, setIsMfaEnabled] = useState(false);
+    const [isOidcEnabled, setIsOidcEnabled] = useState(false);
     const { UI_BASE_COLOR } = useConfig();
 
     const mfaStatus = async () => {
@@ -31,22 +32,31 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             console.error('Error fetching MFA status:', err);
         }
     };
+    const oidcStatus = async() => {
+        try {
+            const response = await apiClient.get('/api/user/get-oidc-status');
+            const { message } = response.data;
+            setIsOidcEnabled(message === "true");
+        } catch (err: any) {
+            console.error('Error fetching OIDC status:', err);
+        }
+    };
 
     useEffect(() => {
             mfaStatus();
+            oidcStatus();
         },
         []);
 
     // Go back to the main menu
     const handleCancel = () => {
         setView('main');
-        setPasswordError(null);
-        setMfaError(null);
+        setError(null);
     };
 
     // Handle change password submission
     const handlePasswordChange = async () => {
-        setPasswordError(null);
+        setError(null);
         try {
             await apiClient.patch('/api/user/change-password', {
                 old_password: oldPassword,
@@ -56,13 +66,13 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             onClose();
             setView("main");
         } catch (err: any) {
-            setPasswordError(err.message);
+            setError(err.message);
         }
     };
 
     // Handle enabling MFA
     const handleEnableMFA = async () => {
-        setMfaError(null);
+        setError(null);
         try {
             const response = await apiClient.post('/api/user/enable-mfa', {});
             const { totp_provisioning_url, mfa_secret } = response.data;
@@ -70,12 +80,12 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             setMfaSecret(mfa_secret);
             setView('mfa-setup');
         } catch (err: any) {
-            setMfaError(err.message);
+            setError(err.message);
         }
     };
 
     const handleDisableMFA = async () => {
-        setMfaError(null);
+        setError(null);
         try {
             const response = await apiClient.delete('/api/user/disable-mfa', {});
             const { message } = response.data;
@@ -83,20 +93,42 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             onClose()
             setView("main");
         } catch (err: any) {
-            setMfaError(err.message || "Failed to disable MFA. Please try again.");
+            setError(err.message || "Failed to disable MFA. Please try again.");
+        }
+    };
+
+    const handleUnlinkOidc = async () => {
+        try {
+            await apiClient.patch(`/api/user/unlink-oidc`, {
+                new_password: newPassword
+            });
+            setSuccessMessage("Unlinked from OIDC successfully.")
+            onClose();
+            setView("main");
+        } catch (err: any) {
+            setError(err.message || "Failed to unlink from OIDC.")
+        }
+    };
+
+    const handleLinkOidc = async () => {
+        try {
+            setError(null);
+            window.location.replace('/login/link-oidc')
+        } catch (err: any) {
+            setError('OIDC-login failed');
         }
     };
 
     // Handle OTP submission
     const handleValidateOtp = async () => {
-        setMfaError(null);
+        setError(null);
         try {
             await apiClient.post('/validate-otp', { otp });
             alert('MFA setup completed successfully!');
             onClose();
             setView("main");
         } catch (err: any) {
-            setMfaError(err.message);
+            setError(err.message);
         }
     }
 
@@ -110,7 +142,6 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
             case "main":
                 return (
                     <div className="p-3">
-                        <h4>Account Settings</h4>
                         <Button
                             variant={UI_BASE_COLOR}
                             className="mb-3 w-100"
@@ -136,7 +167,24 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
                                 Disable MFA
                             </Button>
                         )}
-                        {mfaError && <Alert variant="danger">{mfaError}</Alert>}
+                        {isOidcEnabled && (
+                            <Button
+                                variant={UI_BASE_COLOR}
+                                className="mb-3 w-100"
+                                onClick={() => setView('unlink-oidc')}
+                            >
+                                Unlink OIDC
+                            </Button>
+                        )}
+                        {!isOidcEnabled && (
+                            <Button
+                                variant={`outline-${UI_BASE_COLOR}`}
+                                className="mb-3 w-100"
+                                onClick={handleLinkOidc}
+                            >
+                                Link OIDC
+                            </Button>
+                        )}
                         <Button variant="secondary" className="w-100" onClick={onClose}>
                             Close
                         </Button>
@@ -165,8 +213,35 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
                                     onChange={(e) => setNewPassword(e.target.value)}
                                 />
                             </Form.Group>
-                            {passwordError && <Alert variant="danger">{passwordError}</Alert>}
                             <Button variant={UI_BASE_COLOR} onClick={handlePasswordChange} className="w-100">
+                                Submit
+                            </Button>
+                            <Button variant="secondary" onClick={handleCancel} className="w-100 mt-2">
+                                Cancel
+                            </Button>
+                        </Form>
+                    </div>
+                );
+            case "unlink-oidc":
+                return (
+                    <div className="p-3">
+                        <h4>Unlink account from OIDC</h4>
+                        <p
+                            style={{ color: "red" }}
+                        >
+                            Warning: Local password and MFA will be reset when unlinking OIDC.
+                        </p>
+                        <Form>
+                            <Form.Group className="mb-3">
+                                <Form.Label>New Local Password</Form.Label>
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Enter new local password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                />
+                            </Form.Group>
+                            <Button variant={UI_BASE_COLOR} onClick={handleUnlinkOidc} className="w-100">
                                 Submit
                             </Button>
                             <Button variant="secondary" onClick={handleCancel} className="w-100 mt-2">
@@ -196,7 +271,6 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
                                     onChange={(e) => setOtp(e.target.value)}
                                 />
                             </Form.Group>
-                            {mfaError && <Alert variant="danger">{mfaError}</Alert>}
                             <Button variant={UI_BASE_COLOR} onClick={handleValidateOtp} className="w-100">
                                 Submit
                             </Button>
@@ -211,7 +285,12 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
 
     return (
         <Modal show={show} onHide={handleClose} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Account Settings</Modal.Title>
+            </Modal.Header>
             <Modal.Body>
+                {error && <Alert variant="danger">{error}</Alert>}
+                {successMessage && <Alert variant="success">{successMessage}</Alert>}
                 <SwitchTransition mode="out-in">
                     <CSSTransition
                         key={view}

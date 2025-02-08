@@ -10,7 +10,7 @@ type AdminModalProps = {
 };
 
 const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
-    const [view, setView] = useState<'main' | 'change-email' | 'reset-password' | 'register'>('main');
+    const [view, setView] = useState<'main' | 'change-email' | 'reset-password' | 'unlink-oidc' | 'register'>('main');
     const [users, setUsers] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null); // ID of the user being acted upon
     const [email, setEmail] = useState('');
@@ -112,6 +112,19 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
         }
     }
 
+    const handleUnlinkOidc = async () => {
+        if (!selectedUserId) return;
+        try {
+            await apiClient.patch(`/api/admin/users/${selectedUserId}/unlink-oidc`, {
+                new_password:password
+            });
+            setSuccessMessage("User unlinked from OIDC successfully.")
+            fetchAllUsers();
+        } catch (err: any) {
+            setError(err.message || "Failed to unlink user from OIDC.")
+        }
+    }
+
     const handleCancel = () => {
         setView('main');
         setError(null);
@@ -134,11 +147,10 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
             case "main":
                 return (
                     <div>
-                        <h5>User Management</h5>
                         <p
                             style={{ color: "grey" }}
                         >
-                            Note: To change email address, and to reset password or MFA status, users must be unlinked from OIDC
+                            Note: Only partial account management is available for OIDC users.
                         </p>
                         <Table striped bordered hover>
                             <thead>
@@ -161,7 +173,19 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                     <td>{user.id}</td>
                                     <td>{user.created_at}</td>
                                     <td>{user.last_login}</td>
-                                    <td>{user.auth_type}</td>
+                                    <td>
+                                        <Button
+                                            variant={UI_BASE_COLOR}
+                                            size="sm"
+                                            onClick={() => {
+                                                setSelectedUserId(user.id);
+                                                setView('unlink-oidc')
+                                            }}
+                                            disabled={user.auth_type === 'local'}
+                                        >
+                                            {user.auth_type}
+                                        </Button>
+                                    </td>
                                     <td>{user.username}</td>
                                     <td>
                                         <Button
@@ -283,6 +307,32 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                         </div>
                     </div>
                 );
+            case "unlink-oidc":
+                return (
+                    <div>
+                        <h5>Unlink account from OIDC</h5>
+                        <p
+                            style={{ color: "red" }}
+                        >
+                            Warning: Local password and MFA will be reset when unlinking OIDC.
+                        </p>
+                        <input
+                            type="password"
+                            placeholder="Enter new local password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="form-control"
+                        />
+                        <div className="mt-3">
+                            <Button variant={UI_BASE_COLOR} onClick={handleUnlinkOidc}>
+                                Submit
+                            </Button>{' '}
+                            <Button variant="secondary" onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                );
             case "register":
                 return (
                     <div>
@@ -324,7 +374,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
     return (
         <Modal show={show} onHide={handleClose} centered dialogClassName="modal-90w">
             <Modal.Header closeButton>
-                <Modal.Title>Admin Panel</Modal.Title>
+                <Modal.Title>User Management</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 {error && <Alert variant="danger">{error}</Alert>}
