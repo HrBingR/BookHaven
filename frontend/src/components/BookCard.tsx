@@ -52,9 +52,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
         setShowModal(false);
         setLoading(false);
         refreshBooks();
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error updating book metadata:', err);
-        setError('Failed to save. Retrying...');
+        setError(err.message || 'Failed to save. Retrying...');
         setTimeout(saveRequest, 2000);
       }
     };
