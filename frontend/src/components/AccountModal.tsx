@@ -21,7 +21,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
     const [mfaSecret, setMfaSecret] = useState('');
     const [isMfaEnabled, setIsMfaEnabled] = useState(false);
     const [isOidcEnabled, setIsOidcEnabled] = useState(false);
-    const { UI_BASE_COLOR } = useConfig();
+    const { UI_BASE_COLOR, OIDC_ENABLED } = useConfig();
 
     const mfaStatus = async () => {
         try {
@@ -167,23 +167,27 @@ const AccountModal: React.FC<AccountModalProps> = ({ onClose, show }) => {
                                 Disable MFA
                             </Button>
                         )}
-                        {isOidcEnabled && (
-                            <Button
-                                variant={UI_BASE_COLOR}
-                                className="mb-3 w-100"
-                                onClick={() => setView('unlink-oidc')}
-                            >
-                                Unlink OIDC
-                            </Button>
-                        )}
-                        {!isOidcEnabled && (
-                            <Button
-                                variant={`outline-${UI_BASE_COLOR}`}
-                                className="mb-3 w-100"
-                                onClick={handleLinkOidc}
-                            >
-                                Link OIDC
-                            </Button>
+                        {OIDC_ENABLED && (
+                            <>
+                                {isOidcEnabled && (
+                                    <Button
+                                        variant={UI_BASE_COLOR}
+                                        className="mb-3 w-100"
+                                        onClick={() => setView('unlink-oidc')}
+                                    >
+                                        Unlink OIDC
+                                    </Button>
+                                )}
+                                {!isOidcEnabled && (
+                                    <Button
+                                        variant={`outline-${UI_BASE_COLOR}`}
+                                        className="mb-3 w-100"
+                                        onClick={handleLinkOidc}
+                                    >
+                                        Link OIDC
+                                    </Button>
+                                )}
+                            </>
                         )}
                         <Button variant="secondary" className="w-100" onClick={onClose}>
                             Close

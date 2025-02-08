@@ -19,8 +19,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
     const [adminStatus, setAdminStatus] = useState<boolean | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const { UI_BASE_COLOR } = useConfig();
-
+    const { UI_BASE_COLOR, OIDC_ENABLED } = useConfig();
     useEffect(() => {
         fetchAllUsers();
     }, []);
@@ -158,7 +157,7 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                 <th>UID</th>
                                 <th>Created At</th>
                                 <th>Last Login</th>
-                                <th>Auth Type</th>
+                                { OIDC_ENABLED && ( <th>Auth Type</th> )}
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>Admin Status</th>
@@ -173,19 +172,21 @@ const AdminModal: React.FC<AdminModalProps> = ({ onClose, show }) => {
                                     <td>{user.id}</td>
                                     <td>{user.created_at}</td>
                                     <td>{user.last_login}</td>
-                                    <td>
-                                        <Button
-                                            variant={UI_BASE_COLOR}
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedUserId(user.id);
-                                                setView('unlink-oidc')
-                                            }}
-                                            disabled={user.auth_type === 'local'}
-                                        >
-                                            {user.auth_type}
-                                        </Button>
-                                    </td>
+                                    { OIDC_ENABLED && (
+                                        <td>
+                                            <Button
+                                                variant={UI_BASE_COLOR}
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedUserId(user.id);
+                                                    setView('unlink-oidc')
+                                                }}
+                                                disabled={user.auth_type === 'local'}
+                                            >
+                                                {user.auth_type}
+                                            </Button>
+                                        </td>
+                                    )}
                                     <td>{user.username}</td>
                                     <td>
                                         <Button
