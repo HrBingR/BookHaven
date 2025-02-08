@@ -146,7 +146,7 @@ In the root project directory (BookHaven), run:
 ```
 Replace `tag:version` with your preferred image name and version (e.g., `bookhaven:1.0.0`).
 
-Change log:
+## Change log:
 
 - v1.0.x - Initial Release
 - v1.1.0 - Added OIDC support
