@@ -62,7 +62,7 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
             setError(null);
             window.location.replace('/login/oidc')
         } catch (err: any) {
-            setError('Auto-login failed');
+            setError('OIDC-login failed');
         }
     };
 
@@ -86,14 +86,14 @@ const Login: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
                 navigate('/otp');
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'Incorrect username or password. Please try again.';
+            const errorMessage = err.message || 'Unhandled error occurred. Please try again.';
             setError(errorMessage);
 
             setTimeout(() => {
                 setError(null);
                 setUsername('');
                 setPassword('');
-            }, 1500);
+            }, 3000);
         }
     };
 
