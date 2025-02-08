@@ -18,4 +18,5 @@ class EpubMetadata(Base):
 
     __table_args__ = (
         Index('book_identifier', 'identifier', unique=True),
+        Index('author_title_index_series_idx', 'authors', 'series', 'seriesindex', 'title', unique=True)
     )
