@@ -35,7 +35,7 @@ const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn }) => {
                     md={6}
                     lg={4}
                     xl={3}
-                    xxl={2}
+                    xxl={3}
                     className="mb-4 placeholder-col card-column"
                 >
                   <div className="placeholder-div"></div>
