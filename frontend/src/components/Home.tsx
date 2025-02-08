@@ -9,34 +9,6 @@ import { Book } from '../types';
 const CHUNK_SIZE = 18;
 const MAX_WINDOW_SIZE = 54;
 
-const groupAndSortBooks = (books: Book[]): Book[] => {
-  const sortedBooks = [...books];
-
-  sortedBooks.sort((a, b) => {
-    const authorComparison = a.authors[0].localeCompare(b.authors[0]);
-    if (authorComparison !== 0) return authorComparison;
-
-    if (a.series && b.series) {
-      const seriesComparison = a.series.localeCompare(b.series);
-      if (seriesComparison !== 0) return seriesComparison;
-    }
-
-    if (!a.series && b.series) {
-      return 1;
-    } else if (a.series && !b.series) {
-      return -1;
-    }
-
-    if (a.series && b.series && a.series === b.series) {
-      return (a.seriesindex || 0) - (b.seriesindex || 0);
-    }
-
-    return a.title.localeCompare(b.title);
-  });
-
-  return sortedBooks;
-};
-
 const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [offset, setOffset] = useState<number>(0);
@@ -67,8 +39,8 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
         console.error('Invalid API response:', response.data);
         return [];
       }
-      const groupedBooks = groupAndSortBooks(response.data.books);
-      return groupedBooks || [];
+      const fetchedBooks = response.data.books;
+      return fetchedBooks || [];
     } catch (error) {
       console.error('Error fetching books:', error);
       return [];
