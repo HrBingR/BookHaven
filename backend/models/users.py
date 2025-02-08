@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum, Index
 from models.base import Base
+from typing import Optional
 
 class Users(Base):
     __tablename__ = 'users'
@@ -15,7 +16,7 @@ class Users(Base):
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=True)
     is_admin = Column(Boolean, default=False, nullable=False)
-    oidc_user_id = Column(String(255), unique=True, nullable=True)
+    oidc_user_id: Optional[str] = Column(String(255), unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     last_login = Column(DateTime, default=datetime.now(timezone.utc))
