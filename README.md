@@ -13,8 +13,6 @@
 ## What the Application Does
 BookHaven scans and manages your local library of EPUB ebooks, and allows you to read and download your ebooks on any of your devices, with a sleek, modern, and responsive interface.
 
-Built using a modern tech stack, the frontend leverages React with the react-reader library to render and display EPUB files seamlessly in the browser, while the backend operates on Python Flask with Gunicorn as the web server. The application provides smooth animations, a clean UI, and robust performance—offering a great reading experience for all users.
-
 ## Features
 - **Read eBooks in the Browser**
   Users can access and read their EPUB-formatted eBooks directly without any additional software.
