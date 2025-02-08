@@ -4,8 +4,9 @@ from functions.db import get_session
 from email_validator import validate_email, EmailNotValidError
 import bcrypt
 import re
-from flask import current_app
+from flask import current_app, jsonify, request
 from config.config import config
+from config.logger import logger
 
 def check_required_envs(secret_key: str, base_url: str, oidc_enabled: bool) -> tuple[bool, str]:
     if not secret_key:
@@ -103,3 +104,31 @@ def decrypt_totp_secret(secret):
     fernet = Fernet(current_app.config["FERNET_KEY"])
     decrypted_secret = fernet.decrypt(secret.encode('utf-8')).decode('utf-8')
     return decrypted_secret
+
+def unlink_oidc(user_id):
+    data = request.get_json(silent=True)
+    if data is None or "new_password" not in data:
+        return jsonify({"error": "No password submitted"}), 400
+    new_password = data.get('new_password')
+    valid_pw, message = check_pw_complexity(new_password)
+    if not valid_pw:
+        return jsonify({"error": message}), 400
+    hashed_password = hash_password(new_password)
+    session = get_session()
+    try:
+        user = session.query(Users).filter(Users.id == user_id).first()
+        if not user:
+            return jsonify({"error": "User not found."}), 404
+        user.oidc_user_id = None
+        user.auth_type = "local"
+        user.password_hash = hashed_password
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.last_used_otp = None
+        session.commit()
+        return jsonify({"message": "Successfully un-linked OIDC"}), 200
+    except Exception as e:
+        logger.exception(f"Exception occurred: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+    finally:
+        session.close()
