@@ -150,3 +150,4 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 
 - v1.0.x - Initial Release
 - v1.1.0 - Added OIDC support
+- v1.1.1 - Fixed a bug where OIDC front-end components would still render with OIDC disabled.
