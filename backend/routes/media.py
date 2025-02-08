@@ -21,7 +21,6 @@ def get_cover(book_identifier):
         return Response(placeholder_image, mimetype='image/jpeg', headers={
             "Cache-Control": "public, max-age=259200"
         })
-    logger.debug(f"Content media type is {book_record.cover_media_type}")
     return Response(book_record.cover_image_data, mimetype=book_record.cover_media_type, headers={
         "Cache-Control": "public, max-age=259200"
     })
