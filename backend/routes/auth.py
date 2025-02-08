@@ -2,7 +2,7 @@ import jwt
 import pyotp
 from functions.init import CustomFlask
 from typing import cast
-from flask import request, jsonify, make_response, redirect, Blueprint, current_app, url_for
+from flask import request, jsonify, make_response, redirect, Blueprint, current_app, url_for, session as oidc_session
 from bcrypt import checkpw
 from datetime import datetime, timezone, timedelta
 from config.config import config
@@ -13,6 +13,7 @@ from functions.auth import verify_token
 from functions.db import get_session
 from models.users import Users
 from sqlalchemy import func
+import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -116,8 +117,7 @@ def login():
         if not user:
             user = session.query(Users).filter(Users.email == username).first()
         if user.auth_type == "oidc":
-            if not user.is_admin:
-                return jsonify({"error": "OIDC user cannot log in with username and password"})
+            return jsonify({"error": "OIDC user cannot log in with username and password."}), 400
         if user and checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
             if not user.mfa_enabled:
                 user.last_login = datetime.now(timezone.utc)
@@ -132,7 +132,7 @@ def login():
                 session.commit()
             ip_address = request.remote_addr
             logger.warning(f"Failed login attempt for username/email: {username} from IP: {ip_address}")
-            return make_response(jsonify({'error': 'Invalid credentials'}), 401)
+            return make_response(jsonify({'error': 'Incorrect username or password.'}), 401)
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
         return make_response(jsonify({'error': 'Internal server error'}), 500)
@@ -222,6 +222,15 @@ def oidc_login():
     redirect_uri = url_for('auth.oidc_callback', _external=True)
     return client.authorize_redirect(redirect_uri)
 
+@auth_bp.route('/login/link-oidc', methods=['GET'])
+def link_oidc():
+    oidc_session["link_oidc"] = True
+    client = create_oidc_client()
+    if not client:
+        return jsonify({'error': 'OIDC not configured'}), 400
+    redirect_uri = url_for('auth.oidc_callback', _external=True)
+    return client.authorize_redirect(redirect_uri)
+
 def check_oidc_user(userinfo):
     session = get_session()
     if not userinfo:
@@ -245,10 +254,14 @@ def check_oidc_user(userinfo):
                     token = generate_token(user_id=new_user.id, user_is_admin=new_user.is_admin, user_email=new_user.email)
                     return jsonify({"token": token}), 200
                 return jsonify({"error": "OIDC_AUTO_REGISTER_USER is disabled. Unauthorized."}), 401
-            if config.OIDC_AUTO_LINK_USER:
+            if config.OIDC_AUTO_LINK_USER or oidc_session.get("link_oidc"):
                 user_by_email.auth_type = "oidc"
                 user_by_email.oidc_user_id = userinfo['sub']
+                new_password = secrets.token_hex(16)
+                new_password_hash = hash_password(new_password)
+                user_by_email.hashed_password = new_password_hash
                 session.commit()
+                oidc_session.pop("link_oidc", None)
                 token = generate_token(user_id=user_by_email.id, user_is_admin=user_by_email.is_admin, user_email=user_by_email.email)
                 return jsonify({"token": token}), 200
             return jsonify({"error": "OIDC_AUTO_LINK_USER is disabled. Unauthorized."}), 401
