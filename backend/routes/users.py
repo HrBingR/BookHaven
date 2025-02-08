@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from config.logger import logger
 from functions.book_management import login_required
 from functions.db import get_session
-from functions.utils import hash_password, check_pw_complexity, encrypt_totp_secret
+from functions.utils import hash_password, check_pw_complexity, encrypt_totp_secret, unlink_oidc
 from functions.extensions import limiter
 from models.users import Users
 
@@ -139,6 +139,46 @@ def get_mfa_status(token_state):
             return jsonify({"message": "false"}), 200
     except Exception as e:
         logger.exception(f"Error retrieving MFA status for user ID {user_id}: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        session.close()
+
+@users_bp.route('/user/unlink-oidc', methods=['PATCH'])
+@login_required
+@limiter.limit('2 per second')
+def unlink_oidc_user(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    user_id = token_state["user_id"]
+    unlink_response, unlink_status = unlink_oidc(user_id)
+    return unlink_response, unlink_status
+
+# @users_bp.route('/user/link-oidc', methods=['PATCH'])
+# @login_required
+# @limiter.limit('2 per seconds')
+# def link_oidc_user():
+#     oidc_session["link_oidc"] = True
+#     redirect_uri = url_for('auth.oidc_login', _external=True)
+#     return redirect(redirect_uri)
+
+@users_bp.route('/user/get-oidc-status', methods=['GET'])
+@login_required
+@limiter.limit('2 per second')
+def get_oidc_status(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    user_id = token_state["user_id"]
+    session = get_session()
+    try:
+        user = session.query(Users).filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        if user.auth_type == 'oidc':
+            return jsonify({"message": "true"}), 200
+        else:
+            return jsonify({"message": "false"}), 200
+    except Exception as e:
+        logger.exception(f"Error retrieving OIDC status for user ID {user_id}: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
     finally:
         session.close()
