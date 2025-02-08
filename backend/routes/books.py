@@ -75,6 +75,12 @@ def get_books(token_state):
                 (EpubMetadata.authors.ilike(query_like)) |
                 (EpubMetadata.series.ilike(query_like))
             )
+        books_query = books_query.order_by(
+            EpubMetadata.authors,
+            EpubMetadata.series,
+            EpubMetadata.seriesindex,
+            EpubMetadata.title
+        )
         total_books = books_query.count()
         books = books_query.offset(offset).limit(limit).all()
         book_list = []
