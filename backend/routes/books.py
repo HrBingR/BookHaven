@@ -6,6 +6,9 @@ from functions.db import get_session
 from functions.book_management import get_book_progress, update_book_progress_state, login_required
 from config.config import config, str_to_bool
 from config.logger import logger
+import ebookmeta
+import os
+
 books_bp = Blueprint('books', __name__)
 @books_bp.route('/api/books', methods=['GET'])
 @login_required
@@ -137,6 +140,29 @@ def edit_book_metadata(token_state):
         book_record = session.query(EpubMetadata).filter_by(identifier=identifier).first()
         if not book_record:
             return jsonify({"error": "Book not found"}), 404
+        if config.WRITE_TO_EPUB:
+            book_file = os.path.join(config.BASE_DIRECTORY, book_record.relative_path)
+            book = ebookmeta.get_metadata(book_file)
+            if new_title:
+                book.title = new_title
+            if new_authors:
+                book.set_author_list_from_string(new_authors)
+            if new_series:
+                book.series = new_series
+            if new_seriesindex is not None:
+                try:
+                    book.series_index = float(new_seriesindex)
+                except ValueError:
+                    return jsonify({"error": "Invalid series index format"}), 400
+            if new_seriesindex is None:
+                book.series_index = float(0.0)
+            if new_cover:
+                if not book.cover_image_data or len(book.cover_image_data) <= 10:
+                    return jsonify({"error": "BookHaven can only replace existing cover images, but at this time can not add new ones."}), 400
+                else:
+                    book.cover_image_data = new_cover.read()
+                    book.cover_media_type = new_cover.mimetype
+            ebookmeta.set_metadata(book_file, book)
         if new_title:
             book_record.title = new_title
         if new_authors:
@@ -160,6 +186,7 @@ def edit_book_metadata(token_state):
         return jsonify({"error": "An unexpected error occurred."}), 500
     finally:
         session.close()
+
 
 @books_bp.route('/api/books/<string:book_identifier>', methods=['GET'])
 @login_required

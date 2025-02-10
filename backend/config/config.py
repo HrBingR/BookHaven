@@ -33,6 +33,7 @@ class Config:
         self.ADMIN_RESET = str_to_bool(os.getenv('ADMIN_RESET', "false"))
         self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', "false"))
         self.ALLOW_UNAUTHENTICATED = str_to_bool(os.getenv('ALLOW_UNAUTHENTICATED', "false"))
+        self.WRITE_TO_EPUB = str_to_bool(os.getenv('WRITE_TO_EPUB', "false"))
 
         self.OIDC_ENABLED = str_to_bool(os.getenv('OIDC_ENABLED', "false"))
         self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
