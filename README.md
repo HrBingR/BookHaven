@@ -155,3 +155,5 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 ## TODO:
 
 - Update tests with latest additions
+- Explore support for other formats
+- Explore adding more metadata fields for editing
