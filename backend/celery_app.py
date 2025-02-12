@@ -9,6 +9,11 @@ def make_celery():
         backend=config.CELERY_RESULT_BACKEND,
         include=['functions.tasks.scan']  # Include your task modules
     )
+    scan_interval = config.PERIODIC_SCAN_INTERVAL
+    try:
+        scan_interval = int(scan_interval)
+    except ValueError:
+        scan_interval = 10
     if config.SCHEDULER_ENABLED:
         celery.conf.update({
             'timezone': 'UTC',
@@ -17,7 +22,7 @@ def make_celery():
             'beat_schedule': {
                 'scan-library-periodically': {
                     'task': 'functions.tasks.scan.scan_library_task',
-                    'schedule': timedelta(minutes=config.PERIODIC_SCAN_INTERVAL)
+                    'schedule': timedelta(minutes=scan_interval)
                 },
             },
         })
