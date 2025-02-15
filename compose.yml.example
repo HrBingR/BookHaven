@@ -9,6 +9,10 @@ services:
       - bookhaven-net
     volumes:
       - /path/to/mysql/storage:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   redis:
     container_name: redis
@@ -30,7 +34,8 @@ services:
     networks:
       - bookhaven-net
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
 networks:
   bookhaven-net:
