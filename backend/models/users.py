@@ -21,7 +21,7 @@ class Users(Base):
     updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     last_login = Column(DateTime, default=datetime.now(timezone.utc))
     failed_login_count = Column(Integer, default=0, nullable=False)
-    auth_type = Column(Enum('oidc', 'local'), default='local', nullable=False)
+    auth_type = Column(Enum('oidc', 'local'), default='local', nullable=False, name="auth_type")
     mfa_enabled = Column(Boolean, default=False, nullable=False)
     mfa_secret = Column(String(255), nullable=True)
     last_used_otp = Column(String(8), nullable=True)

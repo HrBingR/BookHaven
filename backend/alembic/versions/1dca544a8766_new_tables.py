@@ -61,8 +61,6 @@ def upgrade() -> None:
     sa.Column('marked_favorite', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['book_id'], ['epub_metadata.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_user_book', 'progress_mapping', ['user_id', 'book_id'], unique=True)
