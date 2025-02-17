@@ -156,6 +156,7 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 
 ## TODO:
 
+- Fix scan logic to ensure initial library scan on first startup
 - Update tests with latest additions
 - Explore support for other formats
 - Explore adding more metadata fields for editing
