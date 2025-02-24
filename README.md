@@ -37,6 +37,8 @@ BookHaven scans and manages your local library of EPUB ebooks, and allows you to
   Has a flag to bypass the login screen when making use of CloudFlare Access. See `.env.example` for details.
 - **OIDC Support**
   Allows for the configuration of OIDC for new user registration, and for existing users.
+- **OPDS Support**
+  Use your favorite OPDS-compatible e-reader or app to browse, download, and read books from your library.
 
 ## Deployment
 
@@ -154,10 +156,10 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 - v1.2.1 - Fixed issue where Celery would detect PERIODIC_SCAN_INTERVAL, if explicitly defined, as a string and throw an exception.
 - v1.2.2 - Fixed migration and DB model logic that would prevent Postgres users from successfully initializing the database.
 - v1.3.0 - Added rudimentary OPDS support.
+- v1.3.1 - Improved OPDS functionality.
 
 ## TODO:
 
-- Improve OPDS functionality
 - Fix scan logic to ensure initial library scan on first startup
 - Update tests with latest additions
 - Explore support for other formats
