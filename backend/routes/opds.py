@@ -14,6 +14,7 @@ from models.epub_metadata import EpubMetadata
 from urllib.parse import urljoin, quote
 from sqlalchemy.exc import SQLAlchemyError
 from redis.exceptions import RedisError
+from sqlalchemy import and_, or_, func
 
 def basic_auth():
     app = cast(CustomFlask, current_app)
@@ -129,10 +130,10 @@ def opds_root():
 
     # Add entry for all books catalog
     books_entry = ElementTree.SubElement(feed, 'entry')
-    add_root_entry(books_entry, 'All Books', 'opds/all')
+    add_nav_entry(books_entry, 'All Books', 'opds/all')
 
     authors_entry = ElementTree.SubElement(feed, 'entry')
-    add_root_entry(authors_entry, 'Authors', 'opds/authors')
+    add_nav_entry(authors_entry, 'Authors', 'opds/authors')
 
     # Convert to string and return as XML response
     return Response(ElementTree.tostring(feed, encoding='unicode'),
@@ -155,7 +156,12 @@ def opds_all_books():
             EpubMetadata.seriesindex,
             EpubMetadata.title
         )
-        books, feed = setup_feed(books_query, 'All Books', 'opds/all')
+        books, feed = setup_feed(
+            books_query,
+            'All Books',
+            'opds/all',
+            'opds'
+        )
         for book in books:
             add_book_entries(feed, book)
         return Response(ElementTree.tostring(feed, encoding='unicode'),
@@ -173,7 +179,12 @@ def opds_get_authors():
         authors_query = session.query(EpubMetadata.authors).distinct().order_by(
             EpubMetadata.authors
         )
-        authors, feed = setup_feed(authors_query, 'Authors', 'opds/authors')
+        authors, feed = setup_feed(
+            authors_query,
+            'Authors',
+            'opds/authors',
+            'opds'
+        )
         for author in authors:
             entry = ElementTree.SubElement(feed, 'entry')
             ElementTree.SubElement(entry, 'title').text = author[0]
@@ -192,13 +203,50 @@ def opds_get_author_name(author_name):
     user = basic_auth()
     if not isinstance(user, Users):
         return user
+    feed = ElementTree.Element('feed', {
+        'xmlns': 'https://www.w3.org/2005/Atom',
+        'xmlns:dcterms': 'https://purl.org/dc/terms/',
+        'xmlns:opds': 'https://opds-spec.org/2010/catalog'
+    })
+    ElementTree.SubElement(feed, 'id').text = request.url
+    ElementTree.SubElement(feed, 'title').text = author_name
+    ElementTree.SubElement(feed, 'updated').text = datetime.now(timezone.utc).isoformat() + 'Z'
+    author = ElementTree.SubElement(feed, 'author')
+    ElementTree.SubElement(author, 'name').text = author_name
+
+    add_link(feed, 'self', request.url, 'application/atom+xml;profile=opds-catalog;kind=acquisition')
+    add_link(feed, 'start', urljoin(request.url_root, 'opds'),
+             'application/atom+xml;profile=opds-catalog;kind=navigation')
+    add_link(feed, 'up', urljoin(request.url_root, 'opds/authors'),
+             'application/atom+xml;profile=opds-catalog;kind=navigation')
+
+    all_entry = ElementTree.SubElement(feed, 'entry')
+    series_entry = ElementTree.SubElement(feed, 'entry')
+    standalone_entry = ElementTree.SubElement(feed, 'entry')
+
+    add_nav_entry(all_entry, 'All Books', f'opds/authors/{quote(author_name)}/all')
+    add_nav_entry(series_entry, 'By Series', f'opds/authors/{quote(author_name)}/series')
+    add_nav_entry(standalone_entry, 'Standalone Titles', f'opds/authors/{quote(author_name)}/standalone')
+    return Response(ElementTree.tostring(feed, encoding='unicode'),
+                    mimetype='application/atom+xml')
+
+@opds_bp.route('/opds/authors/<string:author_name>/all', methods=['GET'])
+def opds_get_author_name_all(author_name):
+    user = basic_auth()
+    if not isinstance(user, Users):
+        return user
     session = get_session()
     try:
         normalized_author_name = author_name.replace('-', ' ').lower()
         books_query = session.query(EpubMetadata).filter(
             EpubMetadata.authors.ilike(f"%{normalized_author_name}%")
         )
-        books, feed = setup_feed(books_query, author_name, f'opds/authors/{author_name}')
+        books, feed = setup_feed(
+            books_query,
+            author_name,
+            f'opds/authors/{author_name}/all',
+            f'opds/authors/{author_name}'
+        )
         for book in books:
             add_book_entries(feed, book)
         return Response(ElementTree.tostring(feed, encoding='unicode'),
@@ -206,14 +254,103 @@ def opds_get_author_name(author_name):
     finally:
         session.close()
 
-def add_root_entry(entry, title, link):
+@opds_bp.route('/opds/authors/<string:author_name>/series', methods=['GET'])
+def opds_get_authors_by_series(author_name):
+    user = basic_auth()
+    if not isinstance(user, Users):
+        return user
+    session = get_session()
+    try:
+        normalized_author_name = author_name.replace('-', ' ').lower()
+        series_query = session.query(EpubMetadata.series).distinct().filter(and_(
+            func.trim(EpubMetadata.series) != "",
+            EpubMetadata.series.is_not(None),
+            EpubMetadata.authors.ilike(f"%{normalized_author_name}%")
+        ))
+        series, feed = setup_feed(
+            series_query,
+            'Series',
+            f'opds/authors/{author_name}/series',
+            f'opds/authors/{author_name}'
+        )
+        for series_name in series:
+            logger.debug(series_name)
+            entry = ElementTree.SubElement(feed, 'entry')
+            ElementTree.SubElement(entry, 'title').text = series_name[0]
+            series_uuid = uuid.uuid5(uuid.NAMESPACE_URL, f"series:{series_name[0]}")
+            ElementTree.SubElement(entry, 'id').text = f'urn:uuid:{series_uuid}'
+            ElementTree.SubElement(entry, 'updated').text = datetime.now(timezone.utc).isoformat() + 'Z'
+            add_link(entry, 'subsection',
+                     urljoin(request.url_root, f'opds/authors/{author_name}/series/{quote(series_name[0])}'),
+                     'application/atom+xml;profile=opds-catalog;kind=acquisition')
+        return Response(ElementTree.tostring(feed, encoding='unicode'),
+                        mimetype='application/atom+xml')
+    finally:
+        session.close()
+
+@opds_bp.route('/opds/authors/<string:author_name>/standalone', methods=['GET'])
+def opds_get_authors_standalone(author_name):
+    user = basic_auth()
+    if not isinstance(user, Users):
+        return user
+    session = get_session()
+    try:
+        normalized_author_name = author_name.replace('-', ' ').lower()
+        standalone_query = session.query(EpubMetadata).filter(and_(
+            or_(
+                EpubMetadata.series.is_(None),
+                and_(
+                    EpubMetadata.series.is_not(None),
+                    func.trim(EpubMetadata.series) == ""
+                )
+            ),
+            EpubMetadata.authors.ilike(f"%{normalized_author_name}%")
+        ))
+        books, feed = setup_feed(
+            standalone_query, 'Standalone Titles',
+            f'opds/authors/{author_name}/standalone',
+            f'opds/authors/{author_name}'
+        )
+        for book in books:
+            add_book_entries(feed, book)
+        return Response(ElementTree.tostring(feed, encoding='unicode'),
+                        mimetype='application/atom+xml')
+    finally:
+        session.close()
+
+@opds_bp.route('/opds/authors/<string:author_name>/series/<string:series_name>', methods=['GET'])
+def opds_get_authors_series_titles(author_name, series_name):
+    user = basic_auth()
+    if not isinstance(user, Users):
+        return user
+    session = get_session()
+    try:
+        normalized_author_name = author_name.replace('-', ' ').lower()
+        books_query = session.query(EpubMetadata).filter(and_(
+            EpubMetadata.authors.ilike(f"%{normalized_author_name}%"),
+            EpubMetadata.series == series_name
+        )).order_by(EpubMetadata.seriesindex)
+        books, feed = setup_feed(
+            books_query,
+            series_name,
+            f'opds/authors/{author_name}/series/{series_name}',
+            f'opds/authors/{author_name}/series'
+        )
+        for book in books:
+            add_book_entries(feed, book)
+        return Response(ElementTree.tostring(feed, encoding='unicode'),
+                        mimetype='application/atom+xml')
+    finally:
+        session.close()
+
+def add_nav_entry(entry, title, link):
     ElementTree.SubElement(entry, 'title').text = title
     ElementTree.SubElement(entry, 'id').text = urljoin(request.url_root, link)
     ElementTree.SubElement(entry, 'updated').text = datetime.now(timezone.utc).isoformat() + 'Z'
     add_link(entry, 'subsection', urljoin(request.url_root, link),
              'application/atom+xml;profile=opds-catalog;kind=acquisition')
 
-def setup_feed(query, title, link):
+def setup_feed(query, title, link, up_link):
     page = request.args.get('page', 1, type=int)
     per_page = 30
     query_count = query.count()
@@ -228,8 +365,11 @@ def setup_feed(query, title, link):
     ElementTree.SubElement(feed, 'updated').text = datetime.now(timezone.utc).isoformat() + 'Z'
 
     add_link(feed, 'self', request.url, 'application/atom+xml;profile=opds-catalog;kind=acquisition')
-    add_link(feed, 'start', urljoin(request.url_root, link),
+    add_link(feed, 'start', urljoin(request.url_root, 'opds'),
              'application/atom+xml;profile=opds-catalog;kind=navigation')
+    add_link(feed, 'up', urljoin(request.url_root, up_link),
+             'application/atom+xml;profile=opds-catalog;kind=navigation')
+
     if page > 1:
         prev_url = urljoin(request.url_root, f'{link}?page={page - 1}')
         add_link(feed, 'previous', prev_url, 'application/atom+xml;profile=opds-catalog;kind=acquisition')
