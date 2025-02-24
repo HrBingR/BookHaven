@@ -29,7 +29,6 @@ def get_cover(book_identifier):
 def download(book_identifier):
     session = get_session()
     book_record = session.query(EpubMetadata).filter_by(identifier=str(book_identifier)).first()
-    logger.debug(f"BASE DIR: {config.BASE_DIRECTORY}")
     if not book_record:
         abort(404, description="Resource not found")
     relative_path = book_record.relative_path
