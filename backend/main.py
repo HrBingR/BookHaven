@@ -1,6 +1,6 @@
 from functions.blueprints import register_blueprints
 from functions.extensions import setup_cors, setup_limiter
-from functions.init import init_env, init_admin_user, init_admin_password_reset, init_rate_limit, init_encryption, init_oauth, CustomFlask
+from functions.init import init_env, init_admin_user, init_admin_password_reset, init_rate_limit, init_encryption, init_oauth, CustomFlask, init_redis
 from config.config import config
 from celery_app import celery
 
@@ -18,6 +18,7 @@ def create_app() -> CustomFlask:
     init_admin_user()
     init_admin_password_reset()
     app.oauth = init_oauth(app)
+    app.redis = init_redis()
     return app
 
 app = create_app()
