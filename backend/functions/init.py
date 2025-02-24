@@ -5,10 +5,24 @@ from functions.utils import check_admin_user, reset_admin_user_password, check_r
 from config.config import config
 from config.logger import logger
 import base64
+import redis
 from authlib.integrations.flask_client import OAuth, OAuthError
+from typing import Optional
 
 class CustomFlask(Flask):
     oauth: OAuth
+    redis: Optional[redis.StrictRedis]
+
+def init_redis() -> Optional[redis.StrictRedis]:
+    if config.OPDS_ENABLED:
+        try:
+            redis_client = redis.StrictRedis.from_url(config.OPDS_REDIS_URI, decode_responses=True)
+            return redis_client
+        except redis.RedisError as e:
+            logger.exception(f"Could not connect to Redis: {e}")
+            raise
+    else:
+        return None
 
 def init_rate_limit(app):
     if config.ENVIRONMENT != "test":
