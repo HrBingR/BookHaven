@@ -153,9 +153,11 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 - v1.2.0 - Added support for optionally writing metadata to the ePub file, instead of just to the database.
 - v1.2.1 - Fixed issue where Celery would detect PERIODIC_SCAN_INTERVAL, if explicitly defined, as a string and throw an exception.
 - v1.2.2 - Fixed migration and DB model logic that would prevent Postgres users from successfully initializing the database.
+- v1.3.0 - Added rudimentary OPDS support.
 
 ## TODO:
 
+- Improve OPDS functionality
 - Fix scan logic to ensure initial library scan on first startup
 - Update tests with latest additions
 - Explore support for other formats
