@@ -21,36 +21,10 @@ const AuthorGridCell: React.FC<AuthorGridCellProps> = ({
        toggleLetter,
        authors,
    }) => {
-    // Calculate expanded height based on CSS grid layout
-    const calculateExpandedHeight = () => {
-        if (!hasAuthors || authors.length === 0) return 160;
-
-        // Estimate authors per row based on typical button width and container width
-        // This is an approximation since we can't easily get the actual container width
-        // Typical author button: ~120px width + gaps
-        // Assume container width varies: small screens ~300px, medium ~600px, large ~900px+
-
-        // Use a responsive approach - assume fewer authors per row for smaller calculations
-        const minAuthorsPerRow = 2; // Conservative estimate for smaller screens
-        const maxAuthorsPerRow = 7; // Estimate for larger screens
-
-        // Use a middle ground that works reasonably well across screen sizes
-        const estimatedAuthorsPerRow = Math.max(minAuthorsPerRow, Math.min(maxAuthorsPerRow, Math.floor(authors.length / 2) || minAuthorsPerRow));
-
-        const estimatedRows = Math.ceil(authors.length / estimatedAuthorsPerRow);
-
-        // Base height + height per row of authors
-        const baseHeight = 85; // Height of the letter button and padding
-        const authorRowHeight = 45; // Height of each row of author buttons (button + gap)
-
-        return Math.max(150, baseHeight + (estimatedRows * authorRowHeight));
-    };
-
-    const expandedHeight = calculateExpandedHeight();
     const collapsedHeight = 85; // Fixed height when collapsed
 
     const styles = useSpring({
-        height: isExpanded ? `${expandedHeight}px` : `${collapsedHeight}px`,
+        height: isExpanded ? `auto` : `${collapsedHeight}px`,
         transform: isExpanded ? 'scale(1.02)' : 'scale(1)',
         config: { tension: 1000, friction: 40 },
     });
