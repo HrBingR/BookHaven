@@ -63,12 +63,7 @@ Download or clone the repository to get `compose.yml.example` and `.env.example`
 ```
 3. **Customize the `.env` File**
 
-Edit `.env` to configure essential settings:
-
-    - **BASE_DIRECTORY**: Path to your eBooks directory.
-    - **BASE_URL**: URL where your app will be accessible.
-    - **DB_TYPE**: Database engine (e.g., mysql, sqlite, postgres).
-    - _Other DB_ settings_* for your database configuration.
+Edit `.env` to configure essential settings.
 
 4. **Start the Application**
 
