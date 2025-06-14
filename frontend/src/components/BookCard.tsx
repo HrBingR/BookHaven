@@ -112,6 +112,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
               src={book.coverUrl}
               alt={book.title}
               className="book-cover"
+              loading="lazy"
           />
         </a>
         <Card.Body>
