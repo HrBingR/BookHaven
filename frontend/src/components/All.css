@@ -44,7 +44,7 @@
 .grid-cell.expanded .authors-list {
   visibility: visible;
   opacity: 1;
-  max-height: 500px; 
+  max-height: 100vh;
   transition: visibility 0s linear 0s, opacity 0.3s ease-in, max-height 0.3s ease-in;
 }
 .grid-cell .authors-list {
@@ -75,8 +75,7 @@
   margin: 2rem auto; 
 }
 .authors-grid {
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, 170px); 
+  display: grid;
   gap: 5px;
   justify-items: center;
   margin: 10px auto auto;
@@ -551,6 +550,11 @@ button:focus {
   }
   .chips-container {
     justify-content: center; 
+  }
+}
+@media (min-width: 540px){
+  .authors-grid {
+    grid-template-columns: repeat(auto-fit, 170px);
   }
 }
 @media (max-width: 540px) {
