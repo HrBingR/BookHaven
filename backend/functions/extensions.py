@@ -5,7 +5,7 @@ from config.config import config
 
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["60 per minute"]
+    default_limits=[f"{config.BACKEND_RATE_LIMIT} per minute"]
 )
 
 def setup_limiter(app):
