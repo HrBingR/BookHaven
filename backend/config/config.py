@@ -48,6 +48,7 @@ class Config:
         self.REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', "").strip()
         self.REDIS_LIMITER_DB = os.getenv('REDIS_LIMITER_DB', 0)
         self.REDIS_SCHEDULER_DB = os.getenv('REDIS_SCHEDULER_DB', 5)
+        self.REDIS_LOCK_DB = os.getenv('REDIS_LOCK_DB', 6)
         self.REDIS_OPDS_DB = os.getenv('REDIS_OPDS_DB', 8)
 
         self.RATE_LIMITER_ENABLED = str_to_bool(os.getenv('RATE_LIMITER_ENABLED', True))
@@ -88,6 +89,12 @@ class Config:
         if not self.REDIS_PASSWORD:
             return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_OPDS_DB}"
         return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_OPDS_DB}"
+
+    @property
+    def REDIS_LOCK_DB_URI(self):
+        if not self.REDIS_PASSWORD:
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LOCK_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LOCK_DB}"
 
 
 config = Config()
