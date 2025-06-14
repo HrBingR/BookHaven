@@ -51,6 +51,8 @@ class Config:
         self.REDIS_OPDS_DB = os.getenv('REDIS_OPDS_DB', 8)
 
         self.RATE_LIMITER_ENABLED = str_to_bool(os.getenv('RATE_LIMITER_ENABLED', True))
+        self.BACKEND_RATE_LIMIT = os.getenv('BACKEND_RATE_LIMIT', 300)
+
         self.SCHEDULER_ENABLED = str_to_bool(os.getenv('SCHEDULER_ENABLED', True))
         self.OPDS_ENABLED = str_to_bool(os.getenv('OPDS_ENABLED', False))
 
