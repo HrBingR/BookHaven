@@ -8,6 +8,7 @@ from functions.db import get_session
 from config.logger import logger
 from config.config import config
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 def find_epubs(base_directory):
     epubs = []
@@ -20,13 +21,7 @@ def find_epubs(base_directory):
 
 def extract_metadata(epub_path, base_directory):
     book = ebookmeta.get_metadata(epub_path)
-    unique_id = book.identifier or epub_path
-    if re.match(r'https?://', unique_id):
-        unique_id = re.sub(r'[^a-zA-Z0-9]', '-', unique_id)
-        unique_id = re.sub(r'-+', '-', unique_id)
     title = book.title
-    if not unique_id.strip():
-        unique_id = title
     authors = book.author_list
     series = book.series or ''
     seriesindex = book.series_index if book.series_index is not None else 0.0
@@ -34,6 +29,14 @@ def extract_metadata(epub_path, base_directory):
     cover_media_type = book.cover_media_type
 
     relative_path = os.path.relpath(epub_path, base_directory)
+    raw_id = (book.identifier or "").strip()
+    if not raw_id:
+        unique_id = relative_path
+    elif re.match(r'https?://', raw_id):
+        unique_id = re.sub(r'[^a-zA-Z0-9]', '-', raw_id)
+        unique_id = re.sub(r'-+', '-', unique_id)
+    else:
+        unique_id = raw_id
     return {
         'identifier': unique_id,
         'title': title,
@@ -67,44 +70,49 @@ def scan_and_store_metadata(base_directory):
     session = get_session()
 
     try:
-        epubs = find_epubs(base_directory)
-        logger.debug(f"Found {len(epubs)} ePubs in base directory: {base_directory}")
-        all_db_records = session.query(EpubMetadata).all()
-        db_identifiers = {record.identifier for record in all_db_records}
-        filesystem_identifiers = set()
-        for epub_path in epubs:
-            metadata = extract_metadata(epub_path, base_directory)
-            unique_id = metadata['identifier']
-            logger.debug(f"Book Title: {metadata['title']}")
+        with session.no_autoflush:
+            epubs = find_epubs(base_directory)
+            logger.debug(f"Found {len(epubs)} ePubs in base directory: {base_directory}")
+            all_db_records = session.query(EpubMetadata).all()
+            db_identifiers = {record.identifier for record in all_db_records}
+            filesystem_identifiers = set()
+            for epub_path in epubs:
+                metadata = extract_metadata(epub_path, base_directory)
+                unique_id = metadata['identifier']
+                logger.debug(f"Book Title: {metadata['title']}")
 
-            filesystem_identifiers.add(unique_id)
+                filesystem_identifiers.add(unique_id)
 
-            existing_record = session.query(EpubMetadata).filter_by(identifier=unique_id).first()
 
-            if existing_record:
-                if existing_record.relative_path != metadata['relative_path']:
-                    existing_record.relative_path = metadata['relative_path']
-                    session.add(existing_record)
-                    logger.debug(f"Updated relative_path in DB for identifier={unique_id}, Path: {metadata['relative_path']}")
-            else:
-                new_entry = EpubMetadata(
-                    identifier=unique_id,
-                    title=metadata['title'],
-                    authors=', '.join(metadata['authors']),
-                    series=metadata['series'],
-                    seriesindex=metadata['seriesindex'],
-                    relative_path=metadata['relative_path'],
-                    cover_image_data=metadata['cover_image_data'],
-                    cover_media_type=metadata['cover_media_type']
-                )
-                session.add(new_entry)
-                if not new_entry.identifier.strip():
-                    session.flush()
-                    new_entry.identifier = new_entry.title
-                logger.debug(f"Stored new metadata in DB for identifier={unique_id}")
-        if config.ENVIRONMENT != "test":
-            remove_missing_files(session, db_identifiers, filesystem_identifiers)
-            remove_missing_user_progress(session)
+                existing_record = session.query(EpubMetadata).filter_by(identifier=unique_id).first()
+
+                if existing_record:
+                    if existing_record.relative_path != metadata['relative_path']:
+                        existing_record.relative_path = metadata['relative_path']
+                        session.add(existing_record)
+                        logger.debug(f"Updated relative_path in DB for identifier={unique_id}, Path: {metadata['relative_path']}")
+                else:
+                    fallback_identifier = unique_id.strip() or metadata['relative_path']
+                    new_entry = EpubMetadata(
+                        identifier=fallback_identifier,
+                        title=metadata['title'],
+                        authors=', '.join(metadata['authors']),
+                        series=metadata['series'],
+                        seriesindex=metadata['seriesindex'],
+                        relative_path=metadata['relative_path'],
+                        cover_image_data=metadata['cover_image_data'],
+                        cover_media_type=metadata['cover_media_type']
+                    )
+                    session.add(new_entry)
+                    try:
+                        session.flush()
+                        logger.debug(f"Stored new metadata in DB for identifier={new_entry.identifier}")
+                    except IntegrityError:
+                        logger.warning(f"Duplicate entry skipped for identifier={unique_id}")
+                        session.rollback()
+            if config.ENVIRONMENT != "test":
+                remove_missing_files(session, db_identifiers, filesystem_identifiers)
+                remove_missing_user_progress(session)
         session.commit()
         logger.info("Library scan and metadata update completed successfully.")
     except Exception as e:
