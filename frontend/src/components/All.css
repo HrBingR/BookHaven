@@ -77,9 +77,9 @@
 .authors-grid {
   display: grid; 
   grid-template-columns: repeat(auto-fit, 170px); 
-  gap: 5px; 
-  margin: auto; 
-  justify-items: center; 
+  gap: 5px;
+  justify-items: center;
+  margin: 10px auto auto;
 }
 .series-title {
   display: flex;
