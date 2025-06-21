@@ -35,3 +35,25 @@ def make_celery():
     return celery
 
 celery = make_celery()
+
+from redis import Redis
+import socket
+from celery.signals import worker_ready
+from config.logger import logger
+
+@worker_ready.connect
+def at_worker_ready(sender, **kwargs):
+    # Delay import to avoid circular import
+    from functions.tasks.scan import scan_library_task
+    redis_lock_client = Redis.from_url(config.REDIS_LOCK_DB_URI)
+
+    hostname = socket.gethostname()
+    logger.info(f"Celery worker_ready signal received on host: {hostname}")
+
+    lock = redis_lock_client.lock("startup_scan_lock", timeout=300)
+    if lock.acquire(blocking=False):
+        logger.info("Running initial scan on startup.")
+        scan_library_task.delay()
+        lock.release()
+    else:
+        logger.info("Startup scan already triggered elsewhere.")

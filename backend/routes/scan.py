@@ -12,5 +12,4 @@ def trigger_scan_manually():
 @scan_bp.route('/scan-status/<task_id>', methods=['GET'])
 def get_scan_status(task_id):
     result = celery.AsyncResult(task_id)
-    # result.state could be 'PENDING', 'STARTED', 'RETRY', 'FAILURE', or 'SUCCESS'
     return jsonify({"state": result.state}), 200
