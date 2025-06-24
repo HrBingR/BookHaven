@@ -1,6 +1,7 @@
 from celery import Celery
 from config.config import config
 from datetime import timedelta
+from config.logger import logger
 
 def make_celery():
     celery = Celery(
@@ -39,7 +40,6 @@ celery = make_celery()
 from redis import Redis
 import socket
 from celery.signals import worker_ready
-from config.logger import logger
 
 @worker_ready.connect
 def at_worker_ready(sender, **kwargs):
