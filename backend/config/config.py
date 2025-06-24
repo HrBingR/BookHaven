@@ -26,6 +26,8 @@ class Config:
 
         self.ENVIRONMENT = "production"
         self.BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
+        self.UPLOADS_DIRECTORY = os.getenv('UPLOADS_DIRECTORY', '/uploads')
+        self.UPLOADS_ENABLED = str_to_bool(os.getenv('UPLOADS_ENABLED', False))
         self.BASE_URL = os.getenv('BASE_URL', "").strip()
         self.SECRET_KEY = os.getenv('SECRET_KEY', "").strip()
         self.ADMIN_PASS = os.getenv('ADMIN_PASS')
