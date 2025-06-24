@@ -1,5 +1,5 @@
 from sqlalchemy import or_, and_
-from flask import Blueprint, request, jsonify, url_for
+from flask import Blueprint, request, jsonify, url_for, current_app
 from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
 from functions.db import get_session
@@ -8,6 +8,9 @@ from config.config import config, str_to_bool
 from config.logger import logger
 import ebookmeta
 import os
+import base64
+from functions.metadata.scan import get_metadata, add_new_db_entry
+from urllib.parse import unquote
 
 books_bp = Blueprint('books', __name__)
 @books_bp.route('/api/books', methods=['GET'])
@@ -120,6 +123,145 @@ def get_books(token_state):
     finally:
         session.close()
 
+@books_bp.route('/api/books/upload', methods=['POST'])
+@login_required()
+def upload_file(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    """
+    Handle file upload.
+    Validates file extension and checks for existing files/DB references.
+    """
+    if not current_app.config['UPLOADS_ENABLED']:
+        return jsonify({'error': 'Uploads feature is disabled'}), 418
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        if not file.filename.lower().endswith('.epub'):
+            return jsonify({'error': 'Only .epub files are allowed'}), 400
+        filename = file.filename
+        existing_upload_files = []
+        existing_basedir_files = []
+        for root, dirs, files in os.walk(config.BASE_DIRECTORY):
+            existing_basedir_files.extend([f.lower() for f in files if f.endswith('.epub')])
+        for root, dirs, files in os.walk(config.UPLOADS_DIRECTORY):
+            existing_upload_files.extend([f.lower() for f in files if f.endswith('.epub')])
+        if filename.lower() in existing_basedir_files:
+            return jsonify({
+                'error': 'A file with this name already exists in the library',
+                'filename': filename
+            }), 409
+        if filename.lower() in existing_upload_files:
+            return jsonify({
+                'error': 'A file with this name already exists in the library',
+                'filename': filename
+            }), 409
+        file_filepath = os.path.join(config.UPLOADS_DIRECTORY, filename)
+        file.save(file_filepath)
+        logger.info(f"Save filename: {file_filepath}")
+        logger.info(f"Base directory: {config.BASE_DIRECTORY}")
+        new_filepath = os.path.join(config.BASE_DIRECTORY, "_uploads", filename)
+        book_metadata = get_metadata(new_filepath, config.BASE_DIRECTORY)
+        session = get_session()
+        book_record = session.query(EpubMetadata).filter_by(identifier=str(book_metadata['identifier'])).first()
+        if book_record:
+            return jsonify({
+                'error': 'A book with this identifier already exists in the library',
+            }), 409
+        session.close()
+        logger.info("File uploaded successfully")
+        cover_image_base64 = None
+        has_cover = False
+        if book_metadata['cover_image_data']:
+            try:
+                cover_image_base64 = base64.b64encode(book_metadata['cover_image_data']).decode('utf-8')
+                has_cover = True
+            except Exception as e:
+                logger.warning(f"Failed to encode cover image: {str(e)}")
+                cover_image_base64 = None
+                has_cover = False
+        book_meta = [{
+            'identifier': book_metadata['identifier'],
+            'title': book_metadata['title'],
+            'authors': book_metadata['authors'],
+            'series': book_metadata['series'],
+            'seriesindex': book_metadata['seriesindex'],
+            'relative_path': book_metadata['relative_path'],
+            'coverImageData': cover_image_base64,
+            'coverMediaType': book_metadata['cover_media_type'] if has_cover else None,
+            'hasCover': has_cover
+        }]
+        return jsonify({
+            'message': 'File uploaded successfully',
+            'book_metadata': book_meta
+        }), 200
+    except Exception as e:
+        if os.path.exists(file_filepath):
+            os.remove(file_filepath)
+        logger.error(f"Error during file upload: {str(e)}")
+        return jsonify({'error': 'Internal server error during upload'}), 500
+
+@books_bp.route('/api/books/upload/cancel/<path:path>', methods=['DELETE'])
+def cancel_upload(path):
+    logger.info(path)
+    decoded_path = unquote(path)
+    full_path = os.path.join(config.BASE_DIRECTORY, decoded_path)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+        return jsonify ({
+            'message': 'Upload cancelled successfully'
+        }), 200
+    else:
+        return jsonify ({
+            'error': 'Upload not found'
+        }), 404
+
+@books_bp.route('/api/books/add', methods=['POST'])
+@login_required
+def add_book(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    identifier = request.form.get('identifier')
+    new_title = request.form.get('title')
+    new_authors = request.form.get('authors')
+    new_series = request.form.get('series')
+    new_seriesindex = request.form.get('seriesindex')
+    new_cover = request.files.get('coverImage')
+    relative_path = request.form.get('relative_path')
+    session = get_session()
+    try:
+        book_file = os.path.join(config.BASE_DIRECTORY, relative_path)
+        metadata = get_metadata(book_file, config.BASE_DIRECTORY)
+        if new_title:
+            metadata['title'] = new_title
+        if new_authors:
+            metadata['authors'] = [author.strip() for author in new_authors.split(',')]
+        if new_series:
+            metadata['series'] = new_series
+        if new_seriesindex is not None:
+            try:
+                metadata['seriesindex'] = float(new_seriesindex)
+            except ValueError:
+                return jsonify({"error": "Invalid series index format"}), 400
+        if new_seriesindex is None:
+            metadata['seriesindex'] = float(0.0)
+        if new_cover:
+            metadata['cover_image_data'] = new_cover.read()
+            metadata['cover_media_type'] = new_cover.mimetype
+        success = add_new_db_entry(session, identifier, metadata)
+        if success:
+            session.commit()
+            return jsonify({'message': 'Book added successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to add book, duplicate entry'}), 409
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({"error": "An unexpected error occurred."}), 500
+    finally:
+        session.close()
 
 @books_bp.route('/api/books/edit', methods=['POST'])
 @login_required
@@ -213,24 +355,28 @@ def get_book_details_by_identifier(book_identifier, token_state):
     finally:
         session.close()
 
+
 @books_bp.route('/api/books/<string:book_identifier>/progress_state', methods=['PUT'])
 @login_required
 def update_progress_state(book_identifier, token_state):
     if token_state == "no_token":
         return jsonify({"error": "Unauthenticated access is not allowed"}), 401
     data = request.get_json(silent=True)
-    if not data:
+    if data is None:
         return jsonify({"error": "Missing request data"}), 400
     if not any(key in data for key in ['is_finished', 'progress', 'favorite']):
-        return jsonify({"error":"Missing one of these keys in request data: 'is_finished', ', 'progress', 'favorite'"}), 400
+        return jsonify(
+            {"error": "Missing one of these keys in request data: 'is_finished', 'progress', 'favorite'"}), 400
+
     session = get_session()
     try:
         book_record = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
         if not book_record:
             return jsonify({"error": "Book not found"}), 404
+
+        update_status, message = update_book_progress_state(token_state, book_identifier, data)
+        if not update_status:
+            return jsonify({"error": message}), 404
+        return jsonify({"message": "Book progress updated successfully"}), 200
     finally:
         session.close()
-    update_status, message = update_book_progress_state(token_state, book_identifier, data)
-    if not update_status:
-        return jsonify({"error": message}), 404
-    return jsonify({"message": "Book progress updated successfully"}), 200
