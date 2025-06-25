@@ -3,7 +3,6 @@ from flask import Blueprint, Response, current_app as app, send_from_directory, 
 from models.epub_metadata import EpubMetadata
 from functions.db import get_session
 from config.config import config
-from config.logger import logger
 
 media_bp = Blueprint('media', __name__)
 
