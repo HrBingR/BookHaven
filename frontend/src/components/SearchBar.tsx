@@ -4,6 +4,7 @@ import { Form, FormControl, Button, ButtonGroup, InputGroup, Alert } from 'react
 import './All.css'; // Import the CSS file
 import { useConfig } from '../context/ConfigProvider';
 import apiClient from "../utilities/apiClient.ts";
+import UploadModal from './UploadModal';
 
 interface SearchBarProps {
     onSearch: (term: string) => void;
@@ -14,6 +15,7 @@ interface SearchBarProps {
     onFinishedToggle: () => void;
     onUnfinishedToggle: () => void;
     isLoggedIn: boolean;
+    refreshBooks?: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -24,16 +26,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                                  onFavoritesToggle,
                                                  onFinishedToggle,
                                                  onUnfinishedToggle,
-                                                 isLoggedIn }) => {
+                                                 isLoggedIn,
+                                                 refreshBooks }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState('');
+    const [showUploadModal, setShowUploadModal] = useState(false);
     const { UI_BASE_COLOR } = useConfig();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSearch(searchTerm);
     };
+    
     const handleScan = async () => {
         try {
             // 1) Trigger the scan and get the task ID
@@ -65,59 +70,75 @@ const SearchBar: React.FC<SearchBarProps> = ({
         }
     };
 
-
     return (
-        <Form onSubmit={handleSubmit}>
-            <div className="search-bar-container">
-                <InputGroup>
-                    <FormControl
-                        type="text"
-                        placeholder="Search for books, authors, or series..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-bar"
-                    />
-                    <Button variant={UI_BASE_COLOR} type="submit" className="search-button">
-                        Search
-                    </Button>
-                    <Button
-                        variant={UI_BASE_COLOR}
-                        className="search-button"
-                        onClick={() => {
-                            handleScan();
-                        }}
-                    >
-                        Scan Library
-                    </Button>
-                </InputGroup>
-            </div>
-
-            {isLoggedIn && (
-                <div className="chips-container mt-2">
-                    <ButtonGroup>
-                        <Button
-                            variant={favoritesActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
-                            onClick={onFavoritesToggle}
-                        >
-                            Favorites
+        <>
+            <Form onSubmit={handleSubmit}>
+                <div className="search-bar-container">
+                    <InputGroup>
+                        <FormControl
+                            type="text"
+                            placeholder="Search for books, authors, or series..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-bar"
+                        />
+                        <Button variant={UI_BASE_COLOR} type="submit" className="search-button">
+                            Search
                         </Button>
+                        {isLoggedIn && (
+                            <Button
+                                variant={UI_BASE_COLOR}
+                                className="search-button"
+                                onClick={() => setShowUploadModal(true)}
+                            >
+                                Upload
+                            </Button>
+                        )}
                         <Button
-                            variant={finishedActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
-                            onClick={onFinishedToggle}
+                            variant={UI_BASE_COLOR}
+                            className="search-button"
+                            onClick={() => {
+                                handleScan();
+                            }}
                         >
-                            Finished
+                            Scan Library
                         </Button>
-                        <Button
-                            variant={unFinishedActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
-                            onClick={onUnfinishedToggle}
-                        >
-                            Unfinished
-                        </Button>
-                        {showAlert && <Alert variant="success" onClose={() => setShowAlert(false)} dismissible>{alertMessage}</Alert>}
-                    </ButtonGroup>
+                    </InputGroup>
                 </div>
-            )}
-        </Form>
+
+                {isLoggedIn && (
+                    <div className="chips-container mt-2">
+                        <ButtonGroup>
+                            <Button
+                                variant={favoritesActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
+                                onClick={onFavoritesToggle}
+                            >
+                                Favorites
+                            </Button>
+                            <Button
+                                variant={finishedActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
+                                onClick={onFinishedToggle}
+                            >
+                                Finished
+                            </Button>
+                            <Button
+                                variant={unFinishedActive ? UI_BASE_COLOR : `outline-${UI_BASE_COLOR}`}
+                                onClick={onUnfinishedToggle}
+                            >
+                                Unfinished
+                            </Button>
+                            {showAlert && <Alert variant="success" onClose={() => setShowAlert(false)} dismissible>{alertMessage}</Alert>}
+                        </ButtonGroup>
+                    </div>
+                )}
+            </Form>
+
+            <UploadModal 
+                show={showUploadModal} 
+                onClose={() => setShowUploadModal(false)}
+                refreshBooks={refreshBooks}
+            />
+        </>
     );
 };
 
