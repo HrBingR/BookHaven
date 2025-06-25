@@ -8,6 +8,7 @@ import base64
 import redis
 from authlib.integrations.flask_client import OAuth, OAuthError
 from typing import Optional
+import os
 
 class CustomFlask(Flask):
     oauth: OAuth
@@ -23,6 +24,31 @@ def init_redis() -> Optional[redis.StrictRedis]:
             raise
     else:
         return None
+
+def init_uploads(app):
+    if not config.UPLOADS_ENABLED or not os.path.exists(config.UPLOADS_DIRECTORY):
+        if not config.UPLOADS_ENABLED or not config.UPLOADS_DIRECTORY:
+            reason = "Uploads feature disabled in config."
+        else:
+            reason = f"Uploads directory ({config.UPLOADS_DIRECTORY}) not mounted into container."
+        logger.warning(f"{reason} Disabling uploads feature.")
+        app.config["UPLOADS_ENABLED"] = False
+        return
+    link_path = os.path.join(config.BASE_DIRECTORY, "_uploads")
+    try:
+        if os.path.islink(link_path):
+            if os.readlink(link_path) == config.UPLOADS_DIRECTORY:
+                app.config["UPLOADS_ENABLED"] = True
+                return
+            else:
+                raise FileExistsError(f"Incorrect symlink at {link_path}")
+        elif os.path.exists(link_path):
+            raise FileExistsError(f"File or directory exists at {link_path} and is not a symlink")
+        os.symlink(config.UPLOADS_DIRECTORY, link_path)
+        app.config["UPLOADS_ENABLED"] = True
+    except (OSError, FileExistsError) as e:
+        logger.warning(f"{e}. Disabling uploads feature.")
+        app.config["UPLOADS_ENABLED"] = False
 
 def init_rate_limit(app):
     if config.ENVIRONMENT != "test":
