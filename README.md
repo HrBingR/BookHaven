@@ -11,6 +11,7 @@
    - [Development]()
 
 4. [Building the Application]()
+5. [Change log]()
 
 
 ## What the Application Does
@@ -144,24 +145,46 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 
 ## Change log:
 
-- v1.0.x - Initial Release
-- v1.1.0 - Added OIDC support
-- v1.1.1 - Fixed a bug where OIDC front-end components would still render with OIDC disabled.
-- v1.2.0 - Added support for optionally writing metadata to the ePub file, instead of just to the database.
-- v1.2.1 - Fixed issue where Celery would detect PERIODIC_SCAN_INTERVAL, if explicitly defined, as a string and throw an exception.
-- v1.2.2 - Fixed migration and DB model logic that would prevent Postgres users from successfully initializing the database.
-- v1.3.0 - Added rudimentary OPDS support.
-- v1.3.1 - Improved OPDS functionality.
-- v1.3.2 - Fixed UI issues on Authors page, fixed some UX issues related to scrolling on Home page, improved cover image loading, upped default API rate limit and made it customizable.
-- v1.3.3 - Implemented locking for the scan process to ensure only one scan runs at a time, and improved DB scan processing logic.
-- v1.3.4 - Fixed rendering of authors on author's page on mobile.
-- v1.3.5 - Updated scan logic - library will now be automatically scanned on first start.
+- v1.0.x
+  - Initial Release
+- v1.1.0
+  - Added OIDC support
+- v1.1.1
+  - Fixed a bug where OIDC front-end components would still render with OIDC disabled.
+- v1.2.0
+  - Added support for optionally writing metadata to the ePub file, instead of just to the database.
+- v1.2.1
+  - Fixed issue where Celery would detect PERIODIC_SCAN_INTERVAL, if explicitly defined, as a string and throw an exception.
+- v1.2.2
+  - Fixed migration and DB model logic that would prevent Postgres users from successfully initializing the database.
+- v1.3.0
+  - Added rudimentary OPDS support.
+- v1.3.1
+  - Improved OPDS functionality.
+- v1.3.2
+  - Fixed UI issues on Authors page
+  - Fixed some UX issues related to scrolling on Home page
+  - Improved cover image loading on the front-end
+  - Upped default API rate limit and made it customizable
+- v1.3.3
+  - Implemented locking for the scan process to ensure only one scan runs at a time
+  - Improved DB component of the scan logic
+- v1.3.4
+  - Fixed rendering of expanded author lists on mobile on the "Authors" page
+- v1.3.5 
+  - Updated scan logic - library will now be automatically scanned on start
+- v1.4.0 
+  - Added Upload functionality - check .env.example on how to enable and use
+  - Updated scanner fallback identifiers from relative paths to filenames
+  - Created migration to update existing fallback identifiers
+  - Swapped from gunicorn sync to gunicorn gthread for better upload performance
+  - Fixed celery task imports for scheduled scans
 
 ## TODO:
 
 - Update tests with latest additions
 - Explore support for other formats
 - Explore adding more metadata fields for editing
-- Add support for uploading books via the front-end
 - Add more fine-grained permissions related to editing metadata and uploads, once in place
 - Add optional form for submitting book requests
+- Disable admin actions for MFA/PW resets if authenticated via Cloudflare
