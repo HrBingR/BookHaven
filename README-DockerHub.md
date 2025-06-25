@@ -189,6 +189,8 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
   - Created migration to update existing fallback identifiers
   - Swapped from gunicorn sync to gunicorn gthread for better upload performance
   - Fixed celery task imports for scheduled scans
+- v1.4.1
+  - Fixed hiding the upload button when uploads feature is disabled
 
 ## TODO:
 
