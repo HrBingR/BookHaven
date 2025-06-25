@@ -7,6 +7,7 @@ export interface ConfigContextType {
     UI_BASE_COLOR: string;
     CF_ACCESS_AUTH: boolean;
     OIDC_ENABLED: boolean;
+    UPLOADS_ENABLED: boolean;
 }
 
 // Create Context

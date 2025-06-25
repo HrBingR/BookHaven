@@ -33,6 +33,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     const [alertMessage, setAlertMessage] = useState('');
     const [showUploadModal, setShowUploadModal] = useState(false);
     const { UI_BASE_COLOR } = useConfig();
+    const { UPLOADS_ENABLED } = useConfig();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,7 +86,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         <Button variant={UI_BASE_COLOR} type="submit" className="search-button">
                             Search
                         </Button>
-                        {isLoggedIn && (
+                        {isLoggedIn && UPLOADS_ENABLED && (
                             <Button
                                 variant={UI_BASE_COLOR}
                                 className="search-button"
