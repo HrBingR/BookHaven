@@ -179,7 +179,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
       if (deltaY > 0 && window.scrollY === 0) {
         // User is pulling down from the top
         setPullDistance(Math.min(deltaY, PULL_THRESHOLD + 50));
-        
+
         // Prevent default scrolling when pulling
         if (deltaY > 10) {
           e.preventDefault();
@@ -210,10 +210,10 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
       if (window.scrollY === 0 && e.deltaY < 0 && hasMoreAbove && !loadingAbove) {
         // User is scrolling up while at the top
         e.preventDefault();
-        
+
         const newPullDistance = Math.min(pullDistance + Math.abs(e.deltaY), PULL_THRESHOLD + 50);
         setPullDistance(newPullDistance);
-        
+
         if (newPullDistance >= PULL_THRESHOLD) {
           fetchAndPrependBooks();
         }
@@ -303,6 +303,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
                 setFinishedQueried(false)
                 refreshBooks();
               }}
+              refreshBooks={refreshBooks}
               isLoggedIn={isLoggedIn}
           />
 
