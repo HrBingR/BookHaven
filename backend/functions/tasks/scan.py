@@ -9,7 +9,7 @@ from functions.metadata.scan import scan_and_store_metadata
 logger.info(f"REDIS LOCK URI: {config.REDIS_LOCK_DB_URI}")
 redis_lock_client = Redis.from_url(config.REDIS_LOCK_DB_URI)
 
-@celery.task(bind=True, name="scan_library_task", max_retries=5)
+@celery.task(bind=True, name="functions.tasks.scan.scan_library_task", max_retries=5)
 def scan_library_task(self):
     lock = redis_lock_client.lock("scan_lock", timeout=900)  # e.g., 15-minute hard max timeout
     if not lock.acquire(blocking=False):
