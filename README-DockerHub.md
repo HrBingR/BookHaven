@@ -201,6 +201,8 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
     - Editor: Includes access to uploads and editing metadata.
     - Admin: Includes access to managing other users.
   - Improved logic when logging in via Cloudflare Access.
+- v.1.5.1
+  - Fixed minor bug affecting legacy columns that were never removed.
 
 ## TODO:
 
