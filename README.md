@@ -40,6 +40,10 @@ BookHaven scans and manages your local library of EPUB ebooks, and allows you to
   Allows for the configuration of OIDC for new user registration, and for existing users.
 - **OPDS Support**
   Use your favorite OPDS-compatible e-reader or app to browse, download, and read books from your library.
+- **Uploads**
+  Users can now upload ebooks directly via the user interface, with a post-upload form to fix the metadata.
+- **Basic RBAC Support**
+  Admins can now give users different roles with different levels of access.
 
 ## Deployment
 
@@ -181,12 +185,16 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
   - Fixed celery task imports for scheduled scans
 - v1.4.1
   - Fixed hiding the upload button when uploads feature is disabled
+- v1.5.0
+  - Added role-based access (RBAC). Admins can now give users different roles as follows:
+    - User: Access to all basic features except for uploads, editing metadata, and manging users.
+    - Editor: Includes access to uploads and editing metadata.
+    - Admin: Includes access to managing other users.
+  - Improved logic when logging in via Cloudflare Access.
 
 ## TODO:
 
 - Update tests with latest additions
 - Explore support for other formats
 - Explore adding more metadata fields for editing
-- Add more fine-grained permissions related to editing metadata and uploads, once in place
 - Add optional form for submitting book requests
-- Disable admin actions for MFA/PW resets if authenticated via Cloudflare
