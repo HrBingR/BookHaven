@@ -3,7 +3,7 @@ import pyotp
 from flask import Blueprint, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 from config.logger import logger
-from functions.book_management import login_required
+from functions.roles import login_required
 from functions.db import get_session
 from functions.utils import hash_password, check_pw_complexity, encrypt_totp_secret, unlink_oidc
 from functions.extensions import limiter
@@ -182,16 +182,3 @@ def get_oidc_status(token_state):
         return jsonify({"error": "An unexpected error occurred"}), 500
     finally:
         session.close()
-
-### TO BE IMPLEMENTED AFTER EMAIL/SMTP:
-
-# @users_bp.route('/user/change-email', methods=['PATCH'])
-# @login_required
-# def change_email(token_state):
-#     data = request.get_json(silent=True)
-#     if token_state == "no_token":
-#         return jsonify({"error": "Unauthenticated access is not allowed"}), 401
-#     user_id = token_state["user_id"]
-#     if data is None:
-#         return jsonify({"error": "No data submitted"}), 400
-#     required_fields = [""]

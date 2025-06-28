@@ -63,7 +63,7 @@ def check_admin_user(password: str, email: str) -> tuple[bool, str]:
             username='admin',
             email=email,
             password_hash=hashed_password,
-            is_admin=True,
+            role='admin',
             auth_type='local'
         )
         session.add(new_admin_user)

@@ -3,7 +3,8 @@ from flask import Blueprint, request, jsonify, url_for, current_app
 from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
 from functions.db import get_session
-from functions.book_management import get_book_progress, update_book_progress_state, login_required
+from functions.book_management import get_book_progress, update_book_progress_state
+from functions.roles import login_required
 from config.config import config, str_to_bool
 from config.logger import logger
 import ebookmeta
@@ -124,7 +125,7 @@ def get_books(token_state):
         session.close()
 
 @books_bp.route('/api/books/upload', methods=['POST'])
-@login_required()
+@login_required(required_roles=["admin", "editor"])
 def upload_file(token_state):
     if token_state == "no_token":
         return jsonify({"error": "Unauthenticated access is not allowed"}), 401
@@ -220,7 +221,7 @@ def cancel_upload(path):
         }), 404
 
 @books_bp.route('/api/books/add', methods=['POST'])
-@login_required
+@login_required(required_roles=["admin", "editor"])
 def add_book(token_state):
     if token_state == "no_token":
         return jsonify({"error": "Unauthenticated access is not allowed"}), 401
@@ -264,7 +265,7 @@ def add_book(token_state):
         session.close()
 
 @books_bp.route('/api/books/edit', methods=['POST'])
-@login_required
+@login_required(required_roles=["admin", "editor"])
 def edit_book_metadata(token_state):
     """
     Handles editing metadata for a book. Updates only the database.

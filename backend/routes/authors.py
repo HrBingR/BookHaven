@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from models.epub_metadata import EpubMetadata
 from functions.db import get_session
-from functions.book_management import login_required
+from functions.roles import login_required
 
 authors_bp = Blueprint('authors', __name__)
 

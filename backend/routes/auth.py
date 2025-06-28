@@ -7,7 +7,7 @@ from bcrypt import checkpw
 from datetime import datetime, timezone, timedelta
 from config.config import config
 from config.logger import logger
-from functions.book_management import login_required
+from functions.roles import login_required
 from functions.utils import decrypt_totp_secret, hash_password
 from functions.auth import verify_token
 from functions.db import get_session
@@ -28,25 +28,25 @@ def create_oidc_client():
     client = oauth.create_client(provider_name)
     return client
 
-def generate_token(user_id, user_is_admin, user_email):
+def generate_token(user_id, user_email, user_role):
     return jwt.encode(
         {
             'token_type': "login",
             'user_id': user_id,
-            'user_is_admin':user_is_admin,
             'user_email':user_email,
+            'user_role':user_role,
             'exp': datetime.now(timezone.utc) + timedelta(hours=24)
         },
         config.SECRET_KEY,
         algorithm='HS256'
     )
 
-def generate_cf_token(user_id, user_is_admin, user_email, cf_iss):
+def generate_cf_token(user_id, user_role, user_email, cf_iss):
     return jwt.encode(
         {
             'token_type': "login",
             'user_id': user_id,
-            'user_is_admin':user_is_admin,
+            'user_role':user_role,
             'user_email':user_email,
             'iss':cf_iss,
             'exp': datetime.now(timezone.utc) + timedelta(hours=24)
@@ -88,7 +88,7 @@ def cf_login(session):
                 )
                 session.add(cf_user)
                 session.commit()
-        token = generate_cf_token(user_id=cf_user.id, user_is_admin=cf_user.is_admin, user_email=cf_user.email, cf_iss=iss)
+        token = generate_cf_token(user_id=cf_user.id, user_role=cf_user.role, user_email=cf_user.email, cf_iss=iss)
         return jsonify({'token': token}), 200
     except Exception as e:
         logger.error(f"Error during login: {str(e)}")
@@ -122,7 +122,7 @@ def login():
             if not user.mfa_enabled:
                 user.last_login = datetime.now(timezone.utc)
                 session.commit()
-                token = generate_token(user_id=user.id, user_is_admin=user.is_admin, user_email=user.email)
+                token = generate_token(user_id=user.id, user_email=user.email, user_role=user.role)
                 return jsonify({'token': token}), 200
             token = generate_totp_token(user_id=user.id)
             return jsonify({'token': token}), 200
@@ -164,7 +164,7 @@ def check_otp(token_state):
         user.last_used_otp = otp
         user.last_login = datetime.now(timezone.utc)
         session.commit()
-        token = generate_token(user_id=user.id, user_is_admin=user.is_admin, user_email=user.email)
+        token = generate_token(user_id=user.id, user_email=user.email)
         return jsonify({'token': token}), 200
     except Exception as e:
         session.rollback()
@@ -251,7 +251,7 @@ def check_oidc_user(userinfo):
                     session.add(user)
                     session.commit()
                     new_user = session.query(Users).get(user.id)
-                    token = generate_token(user_id=new_user.id, user_is_admin=new_user.is_admin, user_email=new_user.email)
+                    token = generate_token(user_id=new_user.id, user_email=new_user.email, user_role=new_user.role)
                     return jsonify({"token": token}), 200
                 return jsonify({"error": "OIDC_AUTO_REGISTER_USER is disabled. Unauthorized."}), 401
             if config.OIDC_AUTO_LINK_USER or oidc_session.get("link_oidc"):
@@ -262,10 +262,10 @@ def check_oidc_user(userinfo):
                 user_by_email.hashed_password = new_password_hash
                 session.commit()
                 oidc_session.pop("link_oidc", None)
-                token = generate_token(user_id=user_by_email.id, user_is_admin=user_by_email.is_admin, user_email=user_by_email.email)
+                token = generate_token(user_id=user_by_email.id, user_email=user_by_email.email, user_role=user_by_email.role)
                 return jsonify({"token": token}), 200
             return jsonify({"error": "OIDC_AUTO_LINK_USER is disabled. Unauthorized."}), 401
-        token = generate_token(user_id=user_by_id.id, user_is_admin=user_by_id.is_admin, user_email=user_by_id.email)
+        token = generate_token(user_id=user_by_id.id, user_email=user_by_id.email, user_role=user_by_id.role)
         return jsonify({"token": token}), 200
     except Exception as e:
         session.rollback()

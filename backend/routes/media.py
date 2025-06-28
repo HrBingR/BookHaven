@@ -2,6 +2,7 @@ import os
 from flask import Blueprint, Response, current_app as app, send_from_directory, jsonify, abort, url_for, request
 from models.epub_metadata import EpubMetadata
 from functions.db import get_session
+from functions.roles import login_required
 from config.config import config
 
 media_bp = Blueprint('media', __name__)
@@ -25,6 +26,7 @@ def get_cover(book_identifier):
     })
 
 @media_bp.route('/download/<string:book_identifier>', methods=['GET'])
+@login_required
 def download(book_identifier):
     session = get_session()
     book_record = session.query(EpubMetadata).filter_by(identifier=str(book_identifier)).first()

@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify, request, g
 from functions.db import get_session
-from functools import wraps
 import random
 import string
 from functions.utils import hash_password, check_pw_complexity, unlink_oidc
-from functions.auth import verify_token
+from functions.roles import login_required
 from models.users import Users
 from config.logger import logger
 from email_validator import validate_email, EmailNotValidError
@@ -12,32 +11,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
-def admin_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith("Bearer "):
-            logger.warning("Warning: User attempted Admin action without a valid auth header.")
-            return jsonify({"error": "Missing or invalid Authorization header."}), 401
-        token = auth_header.split(" ")[1]
-        decoded_token = verify_token(token)
-        if not decoded_token:
-            logger.warning("Warning: User attempted Admin action with an invalid or expired token.")
-            return jsonify({"error": "Invalid or expired token."}), 401
-        if not decoded_token.get("user_is_admin", False):
-            logger.warning(f"Warning: Non-Admin UID {decoded_token.get("user_id")} attempted to access admin-function.")
-            return jsonify({"error": "Forbidden. Admin access only."}), 403
-        g.user = decoded_token
-        return func(*args, **kwargs)
-    return wrapper
-
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + "!@#$%^&*()"
     return ''.join(random.choice(characters) for _ in range(length))
 
 @admin_bp.route('/users', methods=['GET'])
-@admin_required
-def get_all_users():
+@login_required(required_roles=["admin"])
+def get_all_users(token_state):
     """Fetch a list of all users"""
     session = get_session()
     try:
@@ -47,14 +27,14 @@ def get_all_users():
                 "id": user.id,
                 "username": user.username,
                 "email": user.email,
-                "is_admin": user.is_admin,
+                "role": user.role,
                 "auth_type": user.auth_type,
                 "created_at": user.created_at.strftime('%Y-%m-%d %H:%M:%S'),
                 "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S'),
             }
             for user in users
         ]
-        logger.info(f"Admin UID {g.user["user_id"]} successfully retrieved {len(result)} users.")
+        logger.info(f"Admin UID {token_state["user_id"]} successfully retrieved {len(result)} users.")
         return jsonify(result), 200
     except Exception as e:
         logger.exception(e)
@@ -62,39 +42,42 @@ def get_all_users():
     finally:
         session.close()
 
-@admin_bp.route('/users/<int:user_id>/admin-status', methods=['PATCH'])
-@admin_required
-def change_user_admin_status(user_id):
-    """Change the admin's status for a user"""
+@admin_bp.route('/users/<int:user_id>/role', methods=['PATCH'])
+@login_required(required_roles=["admin"])
+def change_user_role(user_id, token_state):
+    """Change the role for a user"""
     session = get_session()
     data = request.get_json()
-    if "is_admin" not in data or not isinstance(data["is_admin"], bool):
-        return jsonify({"error": "Invalid is_admin value provided. Must be a boolean."}), 400
-    current_user_id = g.user["user_id"]
-    if current_user_id == user_id and not data["is_admin"]:
+    if "role" not in data or not isinstance(data["role"], str):
+        return jsonify({"error": "Invalid role value provided."}), 400
+    current_user_id = token_state["user_id"]
+    role = data["role"].lower()
+    valid_roles = ["admin", "editor", "user"]
+    if role not in valid_roles:
+        return jsonify({"error": f"Invalid role '{role}'. Must be one of: {', '.join(valid_roles)}"}), 400
+    if current_user_id == user_id and role != "admin":
         return jsonify({"error": "Admins cannot remove their own admin status."}), 400
     try:
         user = session.query(Users).filter_by(id=user_id).first()
         if not user:
             return jsonify({"error": "User not found."}), 404
-
-        user.is_admin = data["is_admin"]
+        user.role = role
         session.commit()
-        logger.info(f"Admin UID {current_user_id} successfully changed UID {user_id} admin status.")
+        logger.info(f"Admin UID {current_user_id} successfully changed UID {user_id} role.")
         return jsonify({
             "success": True,
-            "message": f"User admin status {'granted' if user.is_admin else 'revoked'} successfully."
+            "message": "User role updated successfully."
         }), 200
     except Exception as e:
         session.rollback()
-        logger.exception(f"Failed to change admin status: {str(e)}")
+        logger.exception(f"Failed to change user role: {str(e)}")
         return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
 
 @admin_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
-@admin_required
-def reset_user_password(user_id):
+@login_required(required_roles=["admin"])
+def reset_user_password(user_id, token_state):
     """Reset a user's password (local-auth users only)"""
     data = request.get_json(silent=True)
     if data is None or "new_password" not in data:
@@ -109,7 +92,7 @@ def reset_user_password(user_id):
             return jsonify({"error": "Cannot reset passwords for OIDC-authenticated users."}), 400
         user.password_hash = hash_password(new_password)
         session.commit()
-        logger.info(f"Admin UID {g.user["user_id"]} successfully reset UID {user_id} password.")
+        logger.info(f"Admin UID {token_state["user_id"]} successfully reset UID {user_id} password.")
         return jsonify({"success": True}), 200
     except Exception as e:
         session.rollback()
@@ -119,8 +102,8 @@ def reset_user_password(user_id):
         session.close()
 
 @admin_bp.route('/users/<int:user_id>/reset-mfa', methods=['POST'])
-@admin_required
-def reset_user_mfa(user_id):
+@login_required(required_roles=["admin"])
+def reset_user_mfa(user_id, token_state):
     session = get_session()
     try:
         user = session.query(Users).filter_by(id=user_id).first()
@@ -133,7 +116,7 @@ def reset_user_mfa(user_id):
         user.mfa_enabled = False
         user.mfa_secret = None
         session.commit()
-        logger.info(f"Admin UID {g.user["user_id"]} successfully reset UID {user_id} MFA.")
+        logger.info(f"Admin UID {token_state["user_id"]} successfully reset UID {user_id} MFA.")
         return jsonify({"message": f"MFA successfully reset for user-id {user_id}"})
     except Exception as e:
         session.rollback()
@@ -144,8 +127,8 @@ def reset_user_mfa(user_id):
 
 
 @admin_bp.route('/users/<int:user_id>/change-email', methods=['PATCH'])
-@admin_required
-def change_email(user_id):
+@login_required(required_roles=["admin"])
+def change_email(user_id, token_state):
     data = request.get_json(silent=True)
     if data is None or "new_email" not in data:
         return jsonify({"error": "New email address required."}), 400
@@ -164,7 +147,7 @@ def change_email(user_id):
             return jsonify({"error": "Unlink OIDC before changing user's email address."}), 400
         user.email = new_email_address
         session.commit()
-        logger.info(f"Admin UID {g.user["user_id"]} successfully changed UID {user_id} email address.")
+        logger.info(f"Admin UID {token_state["user_id"]} successfully changed UID {user_id} email address.")
         return jsonify({"message": "Email address successfully updated."}), 200
     except Exception as e:
         session.rollback()
@@ -174,8 +157,8 @@ def change_email(user_id):
         session.close()
 
 @admin_bp.route('/users/register', methods=['POST'])
-@admin_required
-def register_user():
+@login_required(required_roles=["admin"])
+def register_user(token_state):
     data = request.get_json(silent=True)
     if data is None:
         return jsonify({"error": "No data submitted."}), 400
@@ -183,7 +166,7 @@ def register_user():
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({"error": f"{', '.join(missing_fields).capitalize()} field(s) are required."}), 400
-    is_admin = bool(data.get('is_admin', False))
+    role = (data.get('role', 'user'))
     username = data.get('username')
     password = data.get('password')
     valid_pw, message = check_pw_complexity(password)
@@ -208,10 +191,10 @@ def register_user():
             username=username,
             email=email_address,
             password_hash=hashed_password,
-            is_admin=is_admin
+            role=role
         )
         session.add(new_user)
-        logger.info(f"Admin UID {g.user["user_id"]} successfully registered user {username}.")
+        logger.info(f"Admin UID {token_state["user_id"]} successfully registered user {username}.")
         session.commit()
         return jsonify({"message": f"User {username} added successfully."}), 200
     except Exception as e:
@@ -222,12 +205,12 @@ def register_user():
         session.close()
 
 @admin_bp.route('/users/<int:user_id>/delete', methods=['DELETE'])
-@admin_required
-def delete_user(user_id):
+@login_required(required_roles=["admin"])
+def delete_user(user_id, token_state):
     if user_id <= 0:
         return jsonify({"error": "Invalid user ID."}), 400
     session = get_session()
-    current_user_id = g.user["user_id"]
+    current_user_id = token_state["user_id"]
     if current_user_id == user_id:
         return jsonify({"error": "You cannot delete your own account."}), 400
     try:
@@ -236,7 +219,7 @@ def delete_user(user_id):
             return jsonify({"error": "User not found."}), 404
         session.delete(user)
         session.commit()
-        logger.info(f"Admin UID {g.user["user_id"]} successfully deleted UID {user_id}.")
+        logger.info(f"Admin UID {current_user_id} successfully deleted UID {user_id}.")
         return jsonify({"message": "User successfully deleted."}), 200
     except SQLAlchemyError as e:
         session.rollback()
@@ -250,7 +233,7 @@ def delete_user(user_id):
         session.close()
 
 @admin_bp.route('/users/<int:user_id>/unlink-oidc', methods=['PATCH'])
-@admin_required
+@login_required(required_roles=["admin"])
 def unlink_oidc_admin(user_id):
     if user_id <= 0:
         return jsonify({"error": "Invalid user ID."}), 400
