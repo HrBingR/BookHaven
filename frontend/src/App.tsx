@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState, useEffect } from 'react';
 import {BrowserRouter as Router, Route, Routes, Navigate} from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -14,22 +13,24 @@ import { useConfig } from './context/ConfigProvider';
 
 interface DecodedToken {
   token_type: string;
-  user_is_admin: boolean;
   user_id: number;
+  user_role: string;
   exp?: number;
 }
 
 interface DecodedCFToken {
   token_type: string;
-  user_is_admin: boolean;
   user_id: number;
+  user_role: string;
   iss: string;
   exp?: number;
 }
 
+type UserRole = 'admin' | 'editor' | 'user';
+
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [userRole, setUserRole] = useState<UserRole>('user');
   const { CF_ACCESS_AUTH } = useConfig();
 
   useEffect(() => {
@@ -39,9 +40,7 @@ const App: React.FC = () => {
         const decoded: DecodedToken = jwtDecode(token);
         if (decoded.token_type === 'login') {
           setIsLoggedIn(true);
-        }
-        if (decoded.user_is_admin) {
-          setIsAdmin(true)
+          setUserRole(decoded.user_role as UserRole);
         }
       } catch (err) {
         console.error('Invalid token or decoding error:', err);
@@ -57,6 +56,7 @@ const App: React.FC = () => {
       if (decoded.token_type === 'login') {
         localStorage.setItem('token', token);
         setIsLoggedIn(true);
+        setUserRole(decoded.user_role as UserRole);
       } else if (decoded.token_type === 'totp') {
         localStorage.setItem('token', token);
         setIsLoggedIn(false);
@@ -73,7 +73,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      // No token found, just do your standard logout flow
+      // No token found
       setIsLoggedIn(false);
       return;
     }
@@ -90,6 +90,7 @@ const App: React.FC = () => {
     } else {
       localStorage.removeItem('token');
       setIsLoggedIn(false);
+      setUserRole('user');
       // window.location.reload(); // Optional: reload to reset state
     }
   };
@@ -115,12 +116,12 @@ const App: React.FC = () => {
   return (
       <Router>
         <div className="d-flex">
-          <Sidebar isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
+          <Sidebar isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />
           <div className="flex-grow-1 d-flex flex-column">
             <Routes>
-              <Route path="/" element={<ProtectedRoute><Home isLoggedIn={isLoggedIn} /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Home isLoggedIn={isLoggedIn} userRole={userRole} /></ProtectedRoute>} />
               <Route path="/authors" element={<ProtectedRoute><Authors /></ProtectedRoute>} />
-              <Route path="/authors/:authorName" element={<ProtectedRoute><AuthorPage isLoggedIn={isLoggedIn} /></ProtectedRoute>} />
+              <Route path="/authors/:authorName" element={<ProtectedRoute><AuthorPage isLoggedIn={isLoggedIn} userRole={userRole} /></ProtectedRoute>} />
               <Route path="/read/:identifier" element={<ProtectedRoute><Reader /></ProtectedRoute>} />
               <Route path="/login" element={<Login onLogin={handleLogin}/>} />
               <Route path="/otp" element={<OTP />} />
