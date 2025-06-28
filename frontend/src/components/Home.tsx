@@ -5,12 +5,13 @@ import SearchBar from './SearchBar';
 import Books from './Books';
 import { Container } from 'react-bootstrap';
 import { Book } from '../types';
+import {UserRole} from "../utilities/roleUtils.tsx";
 
 const CHUNK_SIZE = 18;
 const MAX_WINDOW_SIZE = 54;
 const PULL_THRESHOLD = 100; // How far user needs to "pull" to trigger load
 
-const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
+const Home: React.FC<{ isLoggedIn: boolean, userRole: UserRole }> = ({ isLoggedIn, userRole }) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [offset, setOffset] = useState<number>(0);
   const [topOffset, setTopOffset] = useState<number>(0);
@@ -305,6 +306,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               }}
               refreshBooks={refreshBooks}
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
           />
 
           {hasMoreAbove && (
@@ -319,7 +321,7 @@ const Home: React.FC<{ isLoggedIn: boolean }> = ({ isLoggedIn }) => {
               </div>
           )}
 
-          <Books books={books} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} />
+          <Books books={books} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} userRole={userRole} />
 
           {loading && (
               <div className="text-center mt-4">

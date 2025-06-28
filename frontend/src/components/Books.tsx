@@ -3,14 +3,16 @@ import React from 'react';
 import BookCard from './BookCard';
 import { Row, Col } from 'react-bootstrap';
 import { Book } from '../types';
+import {UserRole} from "../utilities/roleUtils.tsx";
 
 interface BooksProps {
   books: Book[];
   refreshBooks: () => void;
   isLoggedIn: boolean;
+  userRole: UserRole;
 }
 
-const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn }) => {
+const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn, userRole }) => {
   return (
       <Row className="mt-4">
         {books.map((book) => (
@@ -23,7 +25,7 @@ const Books: React.FC<BooksProps> = ({ books, refreshBooks, isLoggedIn }) => {
                 xxl={2}
                 className="mb-4 card-column"
             >
-              <BookCard book={book} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} />
+              <BookCard book={book} refreshBooks={refreshBooks} isLoggedIn={isLoggedIn} userRole={userRole} />
             </Col>
         ))}
         {/* Add placeholders if the number of books is less than the grid capacity */}

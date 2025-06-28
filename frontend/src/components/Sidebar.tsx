@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
@@ -6,12 +5,14 @@ import AccountModal from './AccountModal';
 import AdminModal from './AdminModal';
 import {useConfig} from "../context/ConfigProvider.tsx";
 
-const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () => void }> = ({ isLoggedIn, isAdmin, onLogout }) => {
+type UserRole = 'admin' | 'editor' | 'user';
+
+const Sidebar: React.FC<{ isLoggedIn: boolean, userRole: UserRole, onLogout: () => void }> = ({ isLoggedIn, userRole, onLogout }) => {
     const [isOpen, setIsOpen] = useState(true);
     const [isMobileView, setIsMobileView] = useState(false);
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showAdminModal, setShowAdminModal] = useState(false);
-    const { UI_BASE_COLOR } = useConfig();
+    const { UI_BASE_COLOR, CF_ACCESS_AUTH } = useConfig();
 
     useEffect(() => {
         const handleResize = () => {
@@ -56,6 +57,7 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                     </Link>
                     {isLoggedIn && (
                         <>
+                            {!CF_ACCESS_AUTH && (
                             <button
                                 className="list-group-item list-group-item-action bg-light border-0"
                                 onClick={() => setShowAccountModal(true)}
@@ -68,7 +70,8 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
                             >
                                 <i className="fas fa-gear me-2"></i> Account
                             </button>
-                            {isAdmin && (
+                            )}
+                            {userRole === 'admin' && (
                                 <button
                                     className="list-group-item list-group-item-action bg-light border-0"
                                     onClick={() => setShowAdminModal(true)}
@@ -128,7 +131,7 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, isAdmin: boolean, onLogout: () =>
             {isLoggedIn && (
                 <AccountModal onClose={() => setShowAccountModal(false)} show={showAccountModal} />
             )}
-            {isLoggedIn && isAdmin && (
+            {isLoggedIn && userRole === 'admin' && (
                 <AdminModal onClose={() => setShowAdminModal(false)} show={showAdminModal} />
             )}
         </>

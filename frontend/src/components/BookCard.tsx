@@ -1,15 +1,16 @@
-// src/components/BookCard.tsx
 import React, {useState} from 'react';
 import { Card, Button, ButtonGroup, DropdownButton, Modal, Form, Alert } from 'react-bootstrap';
 import apiClient from '../utilities/apiClient';
 import './All.css';
 import { Book } from '../types';
 import { useConfig } from '../context/ConfigProvider';
+import { UserRole, canEditMetadata } from '../utilities/roleUtils';
 
 interface BookCardProps {
   book: Book;
   refreshBooks: () => void;
   isLoggedIn: boolean;
+  userRole: UserRole;
 }
 
 let debounceTimer: number;
@@ -18,7 +19,7 @@ const debounce = (cb: Function, delay: number = 300) => {
   debounceTimer = setTimeout(() => cb(), delay);
 };
 
-const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) => {
+const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn, userRole }) => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,12 +105,35 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
     }
   };
 
+  // Handle authenticated download
+  const handleDownload = async () => {
+    try {
+      const response = await apiClient.get(`/download/${book.identifier}`, {
+        responseType: 'blob', // Important for file downloads
+      });
+      
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${book.title}.epub`; // or get filename from response headers
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed. Please try again.');
+    }
+  };
+
   return (
       <Card className="card-container">
         <a href={`/read/${book.identifier}`}>
           <Card.Img
               variant="top"
-              src={book.coverUrl}
+              src={book.coverUrl} // No auth needed - keep simple
               alt={book.title}
               className="book-cover"
               loading="lazy"
@@ -136,7 +160,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
 
             <Button
                 variant={UI_BASE_COLOR}
-                href={`/download/${book.identifier}`}
+                onClick={handleDownload} // Only downloads use auth
                 className="download-button"
             >
               <i className="fas fa-download"></i>
@@ -159,14 +183,16 @@ const BookCard: React.FC<BookCardProps> = ({ book, refreshBooks, isLoggedIn }) =
                 >
                   <i className="fas fa-check"></i>
                 </Button>
-                <Button
-                    variant={UI_BASE_COLOR}
-                    className="edit-button"
-                    disabled={!isLoggedIn}
-                    onClick={() => setShowModal(true)}
-                >
-                  <i className="fas fa-pencil-alt"></i>
-                </Button>
+                {canEditMetadata(userRole) && (
+                    <Button
+                        variant={UI_BASE_COLOR}
+                        className="edit-button"
+                        disabled={!isLoggedIn}
+                        onClick={() => setShowModal(true)}
+                    >
+                      <i className="fas fa-pencil-alt"></i>
+                    </Button>
+                )}
               </ButtonGroup>
             </DropdownButton>
           </ButtonGroup>

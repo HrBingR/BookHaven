@@ -1,10 +1,10 @@
-// src/components/SearchBar.tsx
 import React, { useState } from 'react';
 import { Form, FormControl, Button, ButtonGroup, InputGroup, Alert } from 'react-bootstrap';
 import './All.css'; // Import the CSS file
 import { useConfig } from '../context/ConfigProvider';
 import apiClient from "../utilities/apiClient.ts";
 import UploadModal from './UploadModal';
+import { UserRole, canUpload } from '../utilities/roleUtils';
 
 interface SearchBarProps {
     onSearch: (term: string) => void;
@@ -15,6 +15,7 @@ interface SearchBarProps {
     onFinishedToggle: () => void;
     onUnfinishedToggle: () => void;
     isLoggedIn: boolean;
+    userRole: UserRole;
     refreshBooks?: () => void;
 }
 
@@ -27,6 +28,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                                  onFinishedToggle,
                                                  onUnfinishedToggle,
                                                  isLoggedIn,
+                                                 userRole,
                                                  refreshBooks }) => {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [showAlert, setShowAlert] = useState(false);
@@ -63,7 +65,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 }
             }
 
-            // 4) Show success message (or handle failure)
+            // 4) Show a success message (or handle failure)
             setAlertMessage("Library scan complete! Please refresh to see results.");
             // At this point you can reload or just let users stay on the page
         } catch (err: any) {
@@ -86,7 +88,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                         <Button variant={UI_BASE_COLOR} type="submit" className="search-button">
                             Search
                         </Button>
-                        {isLoggedIn && UPLOADS_ENABLED && (
+                        {isLoggedIn && UPLOADS_ENABLED && canUpload(userRole) && (
                             <Button
                                 variant={UI_BASE_COLOR}
                                 className="search-button"

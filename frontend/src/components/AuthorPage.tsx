@@ -5,6 +5,7 @@ import { Container, Row, Col, ButtonProps } from 'react-bootstrap';
 import BookCard from './BookCard';
 import { Book } from '../types';
 import './All.css';
+import {UserRole} from "../utilities/roleUtils.tsx";
 
 type ButtonLinkProps = ButtonProps & LinkProps;
 
@@ -39,7 +40,7 @@ const kebabToTitleCase = (str: string | undefined): string => {
         .join(' ');
 };
 
-const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
+const AuthorPage: React.FC<{ isLoggedIn: boolean, userRole: UserRole }> = ({isLoggedIn, userRole}) => {
     const { authorName } = useParams<{ authorName: string }>();
     const [booksBySeries, setBooksBySeries] = useState<{ [key: string]: Book[] }>({});
     const [loading, setLoading] = useState(true);
@@ -102,7 +103,7 @@ const AuthorPage: React.FC<{ isLoggedIn: boolean }> = ({isLoggedIn}) => {
                                 xxl={2}
                                 className="mb-4 card-column"
                             >
-                                <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} />
+                                <BookCard book={book} refreshBooks={() => {}} isLoggedIn={isLoggedIn} userRole={userRole} />
                             </Col>
                         ))}
                         {books.length < 4 &&
