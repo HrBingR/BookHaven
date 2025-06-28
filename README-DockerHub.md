@@ -211,6 +211,4 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 - Update tests with latest additions
 - Explore support for other formats
 - Explore adding more metadata fields for editing
-- Add more fine-grained permissions related to editing metadata and uploads, once in place
 - Add optional form for submitting book requests
-- Disable admin actions for MFA/PW resets if authenticated via Cloudflare
