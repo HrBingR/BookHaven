@@ -15,7 +15,7 @@ class Users(Base):
     username = Column(String(255), unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=True)
-    is_admin = Column(Boolean, default=False, nullable=False)
+    role = Column(Enum('admin', 'editor', 'user'), default='user', nullable=False, name="role")
     oidc_user_id: Optional[str] = Column(String(255), unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
@@ -25,4 +25,3 @@ class Users(Base):
     mfa_enabled = Column(Boolean, default=False, nullable=False)
     mfa_secret = Column(String(255), nullable=True)
     last_used_otp = Column(String(8), nullable=True)
-
