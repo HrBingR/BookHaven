@@ -28,7 +28,7 @@ def upgrade() -> None:
     roles.create(op.get_bind(), checkfirst=True)
     op.add_column(
         'users',
-        sa.Column('role', roles, nullable=True)
+        sa.Column('role', roles, nullable=False, server_default='user')
     )
 
     users_table = sa.table('users',
@@ -42,13 +42,12 @@ def upgrade() -> None:
     connection.execute(
         users_table.update().where(users_table.c.is_admin == False).values(role='user')
     )
-    
-    op.alter_column('users', 'role', nullable=False)
+
     op.drop_column('users', 'is_admin')
 
 
 def downgrade() -> None:
-    op.add_column('users', sa.Column('is_admin', sa.BOOLEAN(), nullable=True))
+    op.add_column('users', sa.Column('is_admin', sa.BOOLEAN(), nullable=False, server_default=sa.false()))
     
     connection = op.get_bind()
     users_table = sa.table('users',
@@ -63,7 +62,6 @@ def downgrade() -> None:
         users_table.update().where(users_table.c.role.in_(['user', 'editor'])).values(is_admin=False)
     )
 
-    op.alter_column('users', 'is_admin', nullable=False)
     op.drop_column('users', 'role')
     roles = sa.Enum('admin', 'editor', 'user', name='roles')
     roles.drop(op.get_bind(), checkfirst=True)
