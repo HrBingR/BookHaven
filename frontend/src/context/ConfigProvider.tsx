@@ -8,6 +8,7 @@ export interface ConfigContextType {
     CF_ACCESS_AUTH: boolean;
     OIDC_ENABLED: boolean;
     UPLOADS_ENABLED: boolean;
+    REQUESTS_ENABLED: boolean;
 }
 
 // Create Context
