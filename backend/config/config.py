@@ -36,6 +36,7 @@ class Config:
         self.CF_ACCESS_AUTH = str_to_bool(os.getenv('CF_ACCESS_AUTH', False))
         self.ALLOW_UNAUTHENTICATED = str_to_bool(os.getenv('ALLOW_UNAUTHENTICATED', False))
         self.WRITE_TO_EPUB = str_to_bool(os.getenv('WRITE_TO_EPUB', False))
+        self.REQUESTS_ENABLED = str_to_bool(os.getenv('REQUESTS_ENABLED', True))
 
         self.OIDC_ENABLED = str_to_bool(os.getenv('OIDC_ENABLED', False))
         self.OIDC_CLIENT_ID = os.getenv('OIDC_CLIENT_ID', None)
