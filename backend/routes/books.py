@@ -1,7 +1,10 @@
 from sqlalchemy import or_, and_
 from flask import Blueprint, request, jsonify, url_for, current_app
+from sqlalchemy.exc import IntegrityError
 from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
+from models.users import Users
+from models.requests import Requests
 from functions.db import get_session
 from functions.book_management import get_book_progress, update_book_progress_state
 from functions.roles import login_required
@@ -379,5 +382,151 @@ def update_progress_state(book_identifier, token_state):
         if not update_status:
             return jsonify({"error": message}), 404
         return jsonify({"message": "Book progress updated successfully"}), 200
+    finally:
+        session.close()
+
+@books_bp.route('/api/books/requests', methods=['POST'])
+@login_required
+def new_request(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "Missing request data"}), 400
+    if not any(key in data for key in ['title', 'authors']):
+        return jsonify({"error": "Missing title or author"}), 400
+    session = get_session()
+    try:
+        new_entry = Requests(
+            request_user_id=token_state.get("user_id"),
+            request_title=data.get('title'),
+            request_authors=data.get('authors'),
+            request_series=data.get('series', ''),
+            request_seriesindex=float(data.get('seriesindex', 0.0)),
+            request_link=data.get('link', ''),
+        )
+        session.add(new_entry)
+        session.commit()
+        return jsonify({"message": "Request submitted successfully"}), 200
+    except IntegrityError:
+        logger.warning(f"Duplicate entry")
+        session.rollback()
+        return jsonify({"error": "This request has already been submitted"}), 409
+    except Exception as e:
+        logger.error(f"Error creating book request: {e}")
+        session.rollback()
+        return jsonify({"error": "An error occurred while processing your request"}), 500
+    finally:
+        session.close()
+
+@books_bp.route('/api/books/requests', methods=['GET'])
+@login_required
+def get_requests(token_state):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+
+    offset = request.args.get('offset', 0, type=int)
+    limit = min(request.args.get('limit', 20, type=int), 20)  # Max 20 per page
+    sort_by = request.args.get('sort_by', 'date', type=str)
+    sort_order = request.args.get('sort_order', 'desc', type=str)
+
+    session = get_session()
+    try:
+        # Get current user's role
+        current_user = session.query(Users).filter(Users.id == token_state['user_id']).first()
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Join with Users table to get username
+        requests_query = session.query(Requests, Users.username).join(
+            Users, Requests.request_user_id == Users.id
+        )
+
+        # Filter based on user role
+        if current_user.role not in ['admin', 'editor']:
+            requests_query = requests_query.filter(Requests.request_user_id == token_state['user_id'])
+
+        # Configure sorting
+        if sort_by == 'title':
+            order_field = Requests.request_title
+        elif sort_by == 'authors':
+            order_field = Requests.request_authors
+        elif sort_by == 'series':
+            order_field = Requests.request_series
+        elif sort_by == 'user':
+            order_field = Users.username
+        else:  # Default to 'date'
+            order_field = Requests.request_date
+
+        if sort_order == 'asc':
+            requests_query = requests_query.order_by(order_field.asc())
+        else:  # Default to 'desc'
+            requests_query = requests_query.order_by(order_field.desc())
+
+        total_requests = requests_query.count()
+        requests_list = requests_query.offset(offset).limit(limit).all()
+
+        request_data = []
+        for req, username in requests_list:
+            request_data.append({
+                "id": req.id,
+                "user_id": req.request_user_id,
+                "username": username,
+                "date": req.request_date.isoformat() if req.request_date else None,
+                "title": req.request_title,
+                "authors": req.request_authors,
+                "series": req.request_series,
+                "seriesindex": req.request_seriesindex,
+                "link": req.request_link
+            })
+
+        return jsonify({
+            "requests": request_data,
+            "total_requests": total_requests,
+            "fetched_offset": offset,
+            "next_offset": offset + limit,
+            "remaining_requests": max(0, total_requests - (offset + limit))
+        })
+
+    except Exception as e:
+        logger.error(f"Error fetching book requests: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+    finally:
+        session.close()
+
+@books_bp.route('/api/books/requests/<int:request_id>', methods=['DELETE'])
+@login_required
+def delete_request(token_state, request_id):
+    if token_state == "no_token":
+        return jsonify({"error": "Unauthenticated access is not allowed"}), 401
+
+    session = get_session()
+    try:
+        # Get current user's role
+        current_user = session.query(Users).filter(Users.id == token_state['user_id']).first()
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Find the request to delete
+        request_to_delete = session.query(Requests).filter(Requests.id == request_id).first()
+        if not request_to_delete:
+            return jsonify({"error": "Request not found"}), 404
+
+        # Check permissions
+        if current_user.role not in ['admin', 'editor']:
+            # Regular users can only delete their own requests
+            if request_to_delete.request_user_id != token_state['user_id']:
+                return jsonify({"error": "You can only delete your own requests"}), 403
+
+        # Delete the request
+        session.delete(request_to_delete)
+        session.commit()
+
+        return jsonify({"message": "Request deleted successfully"}), 200
+
+    except Exception as e:
+        logger.error(f"Error deleting book request: {e}")
+        session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
     finally:
         session.close()
