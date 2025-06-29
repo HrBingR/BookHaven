@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
 import AccountModal from './AccountModal';
 import AdminModal from './AdminModal';
+import RequestsModal from './RequestsModal';
 import {useConfig} from "../context/ConfigProvider.tsx";
 
 type UserRole = 'admin' | 'editor' | 'user';
@@ -12,7 +13,8 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, userRole: UserRole, onLogout: () 
     const [isMobileView, setIsMobileView] = useState(false);
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showAdminModal, setShowAdminModal] = useState(false);
-    const { UI_BASE_COLOR, CF_ACCESS_AUTH } = useConfig();
+    const [showRequestsModal, setShowRequestsModal] = useState(false);
+    const { UI_BASE_COLOR, CF_ACCESS_AUTH, REQUESTS_ENABLED } = useConfig();
 
     useEffect(() => {
         const handleResize = () => {
@@ -58,18 +60,32 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, userRole: UserRole, onLogout: () 
                     {isLoggedIn && (
                         <>
                             {!CF_ACCESS_AUTH && (
-                            <button
-                                className="list-group-item list-group-item-action bg-light border-0"
-                                onClick={() => setShowAccountModal(true)}
-                                style={{
-                                    textAlign: 'left',
-                                    background: 'none',
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                <i className="fas fa-gear me-2"></i> Account
-                            </button>
+                                <button
+                                    className="list-group-item list-group-item-action bg-light border-0"
+                                    onClick={() => setShowAccountModal(true)}
+                                    style={{
+                                        textAlign: 'left',
+                                        background: 'none',
+                                        outline: 'none',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <i className="fas fa-gear me-2"></i> Account
+                                </button>
+                            )}
+                            {REQUESTS_ENABLED && (
+                                <button
+                                    className="list-group-item list-group-item-action bg-light border-0"
+                                    onClick={() => setShowRequestsModal(true)}
+                                    style={{
+                                        textAlign: 'left',
+                                        background: 'none',
+                                        outline: 'none',
+                                        cursor: 'pointer',
+                                    }}
+                                >
+                                    <i className="fas fa-clipboard-list me-2"></i> Requests
+                                </button>
                             )}
                             {userRole === 'admin' && (
                                 <button
@@ -130,6 +146,10 @@ const Sidebar: React.FC<{ isLoggedIn: boolean, userRole: UserRole, onLogout: () 
             {/* Account Modal */}
             {isLoggedIn && (
                 <AccountModal onClose={() => setShowAccountModal(false)} show={showAccountModal} />
+            )}
+            {/* Requests Modal */}
+            {isLoggedIn && (
+                <RequestsModal onClose={() => setShowRequestsModal(false)} show={showRequestsModal} userRole={userRole} />
             )}
             {isLoggedIn && userRole === 'admin' && (
                 <AdminModal onClose={() => setShowAdminModal(false)} show={showAdminModal} />
