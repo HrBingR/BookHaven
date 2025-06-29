@@ -26,6 +26,7 @@ from models.base import Base
 from models.epub_metadata import EpubMetadata
 from models.users import Users
 from models.progress_mapping import ProgressMapping
+from models.requests import Requests
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
