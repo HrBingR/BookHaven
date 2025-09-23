@@ -26,8 +26,10 @@ def check_required_envs(secret_key: str, base_url: str, oidc_enabled: bool) -> t
             return False, "OIDC_ENABLED is True but OIDC_METADATA_ENDPOINT is not configured."
     return True, "Required environment variables are set."
 
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
 
 def check_pw_complexity(password: str) -> tuple[bool, str]:
     if len(password) < 8:
@@ -41,6 +43,7 @@ def check_pw_complexity(password: str) -> tuple[bool, str]:
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return False, "Password must contain at least one special character."
     return True, "Password complexity requirements have been met."
+
 
 def check_admin_user(password: str, email: str) -> tuple[bool, str]:
     session = get_session()
@@ -74,6 +77,7 @@ def check_admin_user(password: str, email: str) -> tuple[bool, str]:
     finally:
         session.close()
 
+
 def reset_admin_user_password(password: str) -> tuple[bool, str]:
     if not password:
         return False, "Missing password for admin user password reset. Please set ADMIN_PASS in environment variables."
@@ -95,15 +99,18 @@ def reset_admin_user_password(password: str) -> tuple[bool, str]:
     finally:
         session.close()
 
+
 def encrypt_totp_secret(secret):
     fernet = Fernet(current_app.config["FERNET_KEY"])
     encrypted_secret = fernet.encrypt(secret.encode('utf-8')).decode('utf-8')
     return encrypted_secret
 
+
 def decrypt_totp_secret(secret):
     fernet = Fernet(current_app.config["FERNET_KEY"])
     decrypted_secret = fernet.decrypt(secret.encode('utf-8')).decode('utf-8')
     return decrypted_secret
+
 
 def unlink_oidc(user_id):
     data = request.get_json(silent=True)

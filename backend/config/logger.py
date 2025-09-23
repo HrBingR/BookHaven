@@ -10,6 +10,7 @@ if LOG_LEVEL not in valid_levels:
     print(f"Invalid log level '{LOG_LEVEL}', defaulting to INFO")
     LOG_LEVEL = "INFO"
 
+
 class Logger:
     def __init__(self):
         self.logger = logging.getLogger('epubdl')
@@ -37,5 +38,6 @@ class Logger:
         self.logger.warning(msg, *args)
     def exception(self, msg, *args):
         self.logger.exception(msg, *args)
+
 
 logger = Logger()

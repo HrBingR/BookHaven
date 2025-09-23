@@ -17,16 +17,19 @@ import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
+
 def get_oauth():
     app = cast(CustomFlask, current_app)
     oauth = app.oauth
     return oauth
+
 
 def create_oidc_client():
     provider_name = config.OIDC_PROVIDER
     oauth = get_oauth()
     client = oauth.create_client(provider_name)
     return client
+
 
 def generate_token(user_id, user_email, user_role):
     return jwt.encode(
@@ -40,6 +43,7 @@ def generate_token(user_id, user_email, user_role):
         config.SECRET_KEY,
         algorithm='HS256'
     )
+
 
 def generate_cf_token(user_id, user_role, user_email, cf_iss):
     return jwt.encode(
@@ -55,6 +59,7 @@ def generate_cf_token(user_id, user_role, user_email, cf_iss):
         algorithm='HS256'
     )
 
+
 def generate_totp_token(user_id):
     return jwt.encode(
         {
@@ -65,6 +70,7 @@ def generate_totp_token(user_id):
         config.SECRET_KEY,
         algorithm='HS256'
     )
+
 
 def cf_login(session):
     cf_cookie = request.cookies.get('CF_Authorization')
@@ -96,6 +102,7 @@ def cf_login(session):
         return make_response(jsonify({'error': 'Internal server error'}), 500)
     finally:
         session.close()
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -139,6 +146,7 @@ def login():
     finally:
         session.close()
 
+
 @auth_bp.route('/login/check-otp', methods=['POST'])
 @login_required(totp=True)
 def check_otp(token_state):
@@ -172,6 +180,7 @@ def check_otp(token_state):
         return jsonify({"error": "Internal server error."}), 500
     finally:
         session.close()
+
 
 @auth_bp.route('/validate-otp', methods=['POST'])
 def validate_otp():
@@ -214,6 +223,7 @@ def validate_otp():
     finally:
         session.close()
 
+
 @auth_bp.route('/login/oidc', methods=['GET'])
 def oidc_login():
     client = create_oidc_client()
@@ -221,6 +231,7 @@ def oidc_login():
         return jsonify({'error': 'OIDC not configured'}), 400
     redirect_uri = url_for('auth.oidc_callback', _external=True)
     return client.authorize_redirect(redirect_uri)
+
 
 @auth_bp.route('/login/link-oidc', methods=['GET'])
 def link_oidc():
@@ -230,6 +241,7 @@ def link_oidc():
         return jsonify({'error': 'OIDC not configured'}), 400
     redirect_uri = url_for('auth.oidc_callback', _external=True)
     return client.authorize_redirect(redirect_uri)
+
 
 def check_oidc_user(userinfo):
     session = get_session()
@@ -273,6 +285,7 @@ def check_oidc_user(userinfo):
         return jsonify({"error": "Internal server error"}), 500
     finally:
         session.close()
+
 
 @auth_bp.route('/login/oidc/callback', methods=['GET'])
 def oidc_callback():

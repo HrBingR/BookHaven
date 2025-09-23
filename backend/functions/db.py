@@ -17,9 +17,11 @@ def get_database_url():
     else:
         raise ValueError(f"Unsupported DB_TYPE: {config.DB_TYPE}")
 
+
 def get_engine():
     database_url = get_database_url()
     return create_engine(database_url)
+
 
 def get_session():
     """

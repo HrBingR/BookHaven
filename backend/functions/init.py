@@ -14,6 +14,7 @@ class CustomFlask(Flask):
     oauth: OAuth
     redis: Optional[redis.StrictRedis]
 
+
 def init_redis() -> Optional[redis.StrictRedis]:
     if config.OPDS_ENABLED:
         try:
@@ -24,6 +25,7 @@ def init_redis() -> Optional[redis.StrictRedis]:
             raise
     else:
         return None
+
 
 def init_uploads(app):
     if not config.UPLOADS_ENABLED or not os.path.exists(config.UPLOADS_DIRECTORY):
@@ -50,11 +52,13 @@ def init_uploads(app):
         logger.warning(f"{e}. Disabling uploads feature.")
         app.config["UPLOADS_ENABLED"] = False
 
+
 def init_rate_limit(app):
     if config.ENVIRONMENT != "test":
         app.config["RATELIMIT_ENABLED"] = config.RATE_LIMITER_ENABLED
     else:
         app.config["RATELIMIT_ENABLED"] = False
+
 
 def init_env():
     try:
@@ -67,6 +71,7 @@ def init_env():
     except Exception as e:
         logger.exception("Failed to check required environment variables: %s", str(e))
         sys.exit(1)
+
 
 def init_admin_user():
     if config.ENVIRONMENT != "test":
@@ -83,6 +88,7 @@ def init_admin_user():
     else:
         logger.debug("TEST ENVIRONMENT")
 
+
 def init_admin_password_reset():
     if config.ADMIN_RESET:
         try:
@@ -97,6 +103,7 @@ def init_encryption(app):
     key_bytes = binascii.unhexlify(config.SECRET_KEY)
     fernet_key = base64.urlsafe_b64encode(key_bytes)
     app.config["FERNET_KEY"] = fernet_key
+
 
 def init_oauth(app):
     if config.OIDC_ENABLED:

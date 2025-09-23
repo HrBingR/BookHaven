@@ -4,6 +4,7 @@ from config.config import config
 
 react_bp = Blueprint("react", __name__, static_folder="../frontend/dist")
 
+
 @react_bp.route("/", defaults={"path": ""})
 @react_bp.route("/<path:path>")
 def serve_react_app(path):
@@ -16,6 +17,7 @@ def serve_react_app(path):
         return send_from_directory(static_folder, path)
     else:
         return send_from_directory(static_folder, "index.html")
+
 
 @react_bp.route("/api/react-init", methods=["GET"])
 def react_frontend_config():

@@ -8,9 +8,11 @@ limiter = Limiter(
     default_limits=[f"{config.BACKEND_RATE_LIMIT} per minute"]
 )
 
+
 def setup_limiter(app):
     limiter.init_app(app)
     return limiter
+
 
 def setup_cors(app):
     allowed_origin = config.BASE_URL

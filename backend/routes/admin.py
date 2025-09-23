@@ -11,9 +11,11 @@ from sqlalchemy.exc import SQLAlchemyError
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
+
 def generate_random_password(length=12):
     characters = string.ascii_letters + string.digits + "!@#$%^&*()"
     return ''.join(random.choice(characters) for _ in range(length))
+
 
 @admin_bp.route('/users', methods=['GET'])
 @login_required(required_roles=["admin"])
@@ -41,6 +43,7 @@ def get_all_users(token_state):
         return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
+
 
 @admin_bp.route('/users/<int:user_id>/role', methods=['PATCH'])
 @login_required(required_roles=["admin"])
@@ -75,6 +78,7 @@ def change_user_role(user_id, token_state):
     finally:
         session.close()
 
+
 @admin_bp.route('/users/<int:user_id>/reset-password', methods=['POST'])
 @login_required(required_roles=["admin"])
 def reset_user_password(user_id, token_state):
@@ -100,6 +104,7 @@ def reset_user_password(user_id, token_state):
         return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
+
 
 @admin_bp.route('/users/<int:user_id>/reset-mfa', methods=['POST'])
 @login_required(required_roles=["admin"])
@@ -156,6 +161,7 @@ def change_email(user_id, token_state):
     finally:
         session.close()
 
+
 @admin_bp.route('/users/register', methods=['POST'])
 @login_required(required_roles=["admin"])
 def register_user(token_state):
@@ -204,6 +210,7 @@ def register_user(token_state):
     finally:
         session.close()
 
+
 @admin_bp.route('/users/<int:user_id>/delete', methods=['DELETE'])
 @login_required(required_roles=["admin"])
 def delete_user(user_id, token_state):
@@ -231,6 +238,7 @@ def delete_user(user_id, token_state):
         return jsonify({"error": "Internal server error. See logs for details."}), 500
     finally:
         session.close()
+
 
 @admin_bp.route('/users/<int:user_id>/unlink-oidc', methods=['PATCH'])
 @login_required(required_roles=["admin"])

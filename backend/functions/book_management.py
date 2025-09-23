@@ -8,6 +8,7 @@ def generate_session_id():
     import uuid
     return str(uuid.uuid4())
 
+
 def get_book_progress_record(token_user_id, book_identifier, session):
     user = session.query(Users).filter_by(id=token_user_id).first()
     book = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
@@ -15,6 +16,7 @@ def get_book_progress_record(token_user_id, book_identifier, session):
         return False, None
     progress_record = session.query(ProgressMapping).filter_by(user_id=user.id, book_id=book.id).first()
     return True, progress_record
+
 
 def get_book_progress(token_state, book_identifier, session):
     token_user_id = token_state.get("user_id")

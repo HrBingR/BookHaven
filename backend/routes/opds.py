@@ -30,7 +30,6 @@ def basic_auth():
         response = make_response('', 401)
         response.headers['WWW-Authenticate'] = 'Basic realm="OPDS Catalog"'
         return response
-
     try:
         token = auth.split(' ')[1]
         decoded_credentials = base64.b64decode(token).decode('utf-8')
@@ -98,6 +97,7 @@ def basic_auth():
     finally:
         session.close()
 
+
 opds_bp = Blueprint('opds', __name__)
 @opds_bp.route('/opds', methods=['GET'])
 def opds_root():
@@ -139,6 +139,7 @@ def opds_root():
     return Response(ElementTree.tostring(feed, encoding='unicode'),
                     mimetype='application/atom+xml')
 
+
 @opds_bp.route('/opds/all', methods=['GET'])
 def opds_all_books():
     """
@@ -169,6 +170,7 @@ def opds_all_books():
     finally:
         session.close()
 
+
 @opds_bp.route('/opds/authors', methods=['GET'])
 def opds_get_authors():
     user = basic_auth()
@@ -197,6 +199,7 @@ def opds_get_authors():
                         mimetype='application/atom+xml')
     finally:
         session.close()
+
 
 @opds_bp.route('/opds/authors/<string:author_name>', methods=['GET'])
 def opds_get_author_name(author_name):
@@ -230,6 +233,7 @@ def opds_get_author_name(author_name):
     return Response(ElementTree.tostring(feed, encoding='unicode'),
                     mimetype='application/atom+xml')
 
+
 @opds_bp.route('/opds/authors/<string:author_name>/all', methods=['GET'])
 def opds_get_author_name_all(author_name):
     user = basic_auth()
@@ -253,6 +257,7 @@ def opds_get_author_name_all(author_name):
                         mimetype='application/atom+xml')
     finally:
         session.close()
+
 
 @opds_bp.route('/opds/authors/<string:author_name>/series', methods=['GET'])
 def opds_get_authors_by_series(author_name):
@@ -288,6 +293,7 @@ def opds_get_authors_by_series(author_name):
     finally:
         session.close()
 
+
 @opds_bp.route('/opds/authors/<string:author_name>/standalone', methods=['GET'])
 def opds_get_authors_standalone(author_name):
     user = basic_auth()
@@ -318,6 +324,7 @@ def opds_get_authors_standalone(author_name):
     finally:
         session.close()
 
+
 @opds_bp.route('/opds/authors/<string:author_name>/series/<string:series_name>', methods=['GET'])
 def opds_get_authors_series_titles(author_name, series_name):
     user = basic_auth()
@@ -343,12 +350,14 @@ def opds_get_authors_series_titles(author_name, series_name):
     finally:
         session.close()
 
+
 def add_nav_entry(entry, title, link):
     ElementTree.SubElement(entry, 'title').text = title
     ElementTree.SubElement(entry, 'id').text = urljoin(request.url_root, link)
     ElementTree.SubElement(entry, 'updated').text = datetime.now(timezone.utc).isoformat() + 'Z'
     add_link(entry, 'subsection', urljoin(request.url_root, link),
              'application/atom+xml;profile=opds-catalog;kind=acquisition')
+
 
 def setup_feed(query, title, link, up_link):
     page = request.args.get('page', 1, type=int)
@@ -379,6 +388,7 @@ def setup_feed(query, title, link, up_link):
         add_link(feed, 'next', next_url, 'application/atom+xml;profile=opds-catalog;kind=acquisition')
     return query_items, feed
 
+
 def add_link(parent, rel, href, type_):
     """Helper function to add link elements"""
     ElementTree.SubElement(parent, 'link', {
@@ -386,6 +396,7 @@ def add_link(parent, rel, href, type_):
         'href': href,
         'type': type_
     })
+
 
 def add_book_entries(feed, book):
     entry = ElementTree.SubElement(feed, 'entry')

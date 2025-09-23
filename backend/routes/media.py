@@ -7,6 +7,7 @@ from config.config import config
 
 media_bp = Blueprint('media', __name__)
 
+
 @media_bp.route('/api/covers/<string:book_identifier>', methods=['GET'])
 def get_cover(book_identifier):
     """
@@ -25,6 +26,7 @@ def get_cover(book_identifier):
         "Cache-Control": "public, max-age=259200"
     })
 
+
 @media_bp.route('/download/<string:book_identifier>', methods=['GET'])
 @login_required
 def download(book_identifier):
@@ -41,6 +43,7 @@ def download(book_identifier):
     except FileNotFoundError:
         abort(404, description="File not found")
 
+
 @media_bp.route('/stream/<string:book_identifier>', methods=['GET'])
 def stream(book_identifier):
     session = get_session()
@@ -53,6 +56,7 @@ def stream(book_identifier):
         abort(404, description="ePub file not found.")
     epub_file_url = config.BASE_URL.rstrip("/") + url_for('media.serve_book_file', filename=relative_path)
     return jsonify({"url": epub_file_url})
+
 
 @media_bp.route('/files/<path:filename>', methods=['GET'])
 def serve_book_file(filename):

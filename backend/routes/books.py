@@ -17,6 +17,8 @@ from functions.metadata.scan import get_metadata, add_new_db_entry
 from urllib.parse import unquote
 
 books_bp = Blueprint('books', __name__)
+
+
 @books_bp.route('/api/books', methods=['GET'])
 @login_required
 def get_books(token_state):
@@ -127,6 +129,7 @@ def get_books(token_state):
     finally:
         session.close()
 
+
 @books_bp.route('/api/books/upload', methods=['POST'])
 @login_required(required_roles=["admin", "editor"])
 def upload_file(token_state):
@@ -208,6 +211,7 @@ def upload_file(token_state):
         logger.error(f"Error during file upload: {str(e)}")
         return jsonify({'error': 'Internal server error during upload'}), 500
 
+
 @books_bp.route('/api/books/upload/cancel/<path:path>', methods=['DELETE'])
 def cancel_upload(path):
     logger.info(path)
@@ -222,6 +226,7 @@ def cancel_upload(path):
         return jsonify ({
             'error': 'Upload not found'
         }), 404
+
 
 @books_bp.route('/api/books/add', methods=['POST'])
 @login_required(required_roles=["admin", "editor"])
@@ -266,6 +271,7 @@ def add_book(token_state):
         return jsonify({"error": "An unexpected error occurred."}), 500
     finally:
         session.close()
+
 
 @books_bp.route('/api/books/edit', methods=['POST'])
 @login_required(required_roles=["admin", "editor"])
@@ -385,6 +391,7 @@ def update_progress_state(book_identifier, token_state):
     finally:
         session.close()
 
+
 @books_bp.route('/api/books/requests', methods=['POST'])
 @login_required
 def new_request(token_state):
@@ -418,6 +425,7 @@ def new_request(token_state):
         return jsonify({"error": "An error occurred while processing your request"}), 500
     finally:
         session.close()
+
 
 @books_bp.route('/api/books/requests', methods=['GET'])
 @login_required
@@ -493,6 +501,7 @@ def get_requests(token_state):
         return jsonify({'error': 'Internal server error'}), 500
     finally:
         session.close()
+
 
 @books_bp.route('/api/books/requests/<int:request_id>', methods=['DELETE'])
 @login_required

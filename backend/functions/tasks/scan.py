@@ -15,7 +15,6 @@ def scan_library_task(self):
     if not lock.acquire(blocking=False):
         logger.warning("Another scan is already running. Skipping this one.")
         return "scan_already_running"
-
     try:
         logger.info("Starting scan with lock acquired.")
         scan_and_store_metadata(config.BASE_DIRECTORY)

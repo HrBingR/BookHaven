@@ -5,6 +5,7 @@ from functions.roles import login_required
 
 authors_bp = Blueprint('authors', __name__)
 
+
 @authors_bp.route('/api/authors', methods=['GET'])
 @login_required
 def get_authors():
@@ -28,6 +29,7 @@ def get_authors():
         "authors": sorted_authors,
         "total_authors": len(sorted_authors)
     })
+
 
 @authors_bp.route('/api/authors/<string:author_name>', methods=['GET'])
 @login_required

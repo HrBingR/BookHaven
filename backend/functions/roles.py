@@ -26,6 +26,7 @@ def user_logged_in():
     finally:
         session.close()
 
+
 def get_user_role(user_id):
     """Get the current role for a user from the database"""
     session = get_session()
@@ -36,6 +37,7 @@ def get_user_role(user_id):
         return user_record.role
     finally:
         session.close()
+
 
 def login_required(func=None, totp=False, required_roles=None):
     """

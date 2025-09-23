@@ -11,6 +11,7 @@ from models.users import Users
 
 users_bp = Blueprint('users', __name__, url_prefix='/api')
 
+
 @users_bp.route('/user/change-password', methods=['PATCH'])
 @login_required
 @limiter.limit('2 per second')
@@ -57,6 +58,7 @@ def change_password(token_state):
     finally:
         session.close()
 
+
 @users_bp.route('/user/enable-mfa', methods=['POST'])
 @login_required
 @limiter.limit('2 per second')
@@ -94,6 +96,7 @@ def enable_mfa(token_state):
         "mfa_secret": mfa_secret_split
     }), 200
 
+
 @users_bp.route('/user/disable-mfa', methods=['DELETE'])
 @login_required
 @limiter.limit('2 per second')
@@ -121,6 +124,7 @@ def disable_mfa(token_state):
         session.close()
     return jsonify({"message": "MFA successfully disabled."}), 200
 
+
 @users_bp.route('/user/get-mfa-status', methods=['GET'])
 @login_required
 @limiter.limit('2 per second')
@@ -143,6 +147,7 @@ def get_mfa_status(token_state):
     finally:
         session.close()
 
+
 @users_bp.route('/user/unlink-oidc', methods=['PATCH'])
 @login_required
 @limiter.limit('2 per second')
@@ -160,6 +165,7 @@ def unlink_oidc_user(token_state):
 #     oidc_session["link_oidc"] = True
 #     redirect_uri = url_for('auth.oidc_login', _external=True)
 #     return redirect(redirect_uri)
+
 
 @users_bp.route('/user/get-oidc-status', methods=['GET'])
 @login_required
