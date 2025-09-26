@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, LargeBinary, Index
-from sqlalchemy.dialects.mysql import LONGBLOB
+from sqlalchemy import Column, Integer, String, Float, Index
 from models.base import Base
 
 class EpubMetadata(Base):
@@ -12,8 +11,7 @@ class EpubMetadata(Base):
     series = Column(String(255))
     seriesindex = Column(Float)
     relative_path = Column(String(255), unique=True)
-    cover_image_data = Column(LargeBinary().with_variant(LONGBLOB, 'mysql'))
-    cover_media_type = Column(String(255))
+    cover_image_path = Column(String(255), nullable=True)
     progress = Column(String(255), nullable=True)
 
     __table_args__ = (
