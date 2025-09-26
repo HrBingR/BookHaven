@@ -9,21 +9,12 @@ def generate_session_id():
     return str(uuid.uuid4())
 
 
-def get_book_progress_record(token_user_id, book_identifier, session):
+def get_book_progress_record(token_state, book_identifier, session):
+    token_user_id = token_state.get("user_id")
     user = session.query(Users).filter_by(id=token_user_id).first()
     book = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
-    if not session.query(ProgressMapping).filter_by(user_id=user.id, book_id=book.id).first():
-        return False, None
-    progress_record = session.query(ProgressMapping).filter_by(user_id=user.id, book_id=book.id).first()
-    return True, progress_record
+    return session.query(ProgressMapping).filter_by(user_id=user.id, book_id=book.id).first()
 
-
-def get_book_progress(token_state, book_identifier, session):
-    token_user_id = token_state.get("user_id")
-    book_progress_status, book_progress = get_book_progress_record(token_user_id, book_identifier, session)
-    if not book_progress_status:
-        return False, None
-    return True, book_progress
 
 def construct_new_book_progress_record(data):
     record = {}
@@ -39,9 +30,9 @@ def construct_new_book_progress_record(data):
 def update_book_progress_state(token_state, book_identifier, data):
     token_user_id = token_state.get("user_id")
     session = get_session()
-    record_status, record = get_book_progress_record(token_user_id, book_identifier, session)
+    record = get_book_progress_record(token_state, book_identifier, session)
     try:
-        if not record_status:
+        if not record:
             user = session.query(Users).filter_by(id=token_user_id).first()
             book = session.query(EpubMetadata).filter_by(identifier=book_identifier).first()
             logger.debug(f"Book identifier: {book.identifier}")
@@ -67,6 +58,6 @@ def update_book_progress_state(token_state, book_identifier, data):
     except Exception as e:
         session.rollback()
         logger.exception("Error occurred: %s", e)
-        return False, f"Error updating finished state: {str(e)}"
+        return False, f"Error updating progress state: {str(e)}"
     finally:
         session.close()
