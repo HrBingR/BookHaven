@@ -35,6 +35,4 @@ def test_redis_pw():
     config = Config()
 
     with patch.object(config, "REDIS_PASSWORD", "HELLO"):
-        assert "HELLO" in config.RATE_LIMITER_URI
-        assert "HELLO" in config.CELERY_BROKER_URL
-        assert "HELLO" in config.CELERY_RESULT_BACKEND
+        assert "HELLO" in config.redis_db_uri
