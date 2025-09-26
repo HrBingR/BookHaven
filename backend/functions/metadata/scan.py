@@ -1,6 +1,8 @@
 import os
 import re
 import ebookmeta
+import secrets
+import hashlib
 from models.epub_metadata import EpubMetadata
 from models.progress_mapping import ProgressMapping
 from models.users import Users
@@ -9,6 +11,10 @@ from config.logger import logger
 from config.config import config
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from tempfile import NamedTemporaryFile
+import pyvips
+from functions.utils import update_redis_cache, invalidate_redis_cache
+
 
 def find_epubs(base_directory):
     epubs = []
@@ -32,6 +38,9 @@ def get_metadata(epub_path, base_directory):
         unique_id = re.sub(r'-+', '-', unique_id)
     else:
         unique_id = raw_id
+    cover_image_token = secrets.token_urlsafe(12)[:16]
+    cover_image_path = get_image_save_path(cover_image_token) if book_meta['cover_image_data'] is not None else None
+
     return {
         'identifier': unique_id,
         'title': book_meta['title'],
@@ -40,8 +49,57 @@ def get_metadata(epub_path, base_directory):
         'seriesindex': book_meta['seriesindex'],
         'relative_path': relative_path,
         'cover_image_data': book_meta['cover_image_data'],
-        'cover_media_type': book_meta['cover_media_type']
+        'cover_image_path': cover_image_path
     }
+
+
+def make_cover_webp_vips(src_bytes: bytes, target_max_height: int = 300, quality: int = 78) -> bytes:
+    """
+    Convert image bytes to a WebP cover:
+    - sRGB, no alpha (flattened to white)
+    - height <= target_max_height, aspect preserved, no upscaling
+    - metadata stripped
+    """
+    # Stream from memory
+    img = pyvips.Image.new_from_buffer(src_bytes, "", access="sequential")
+
+    # Flatten any alpha onto white (even if you don't expect it, this is cheap and safe)
+    if img.hasalpha():
+        img = img.flatten(background=[255, 255, 255])
+
+    # Ensure sRGB/GRAY
+    try:
+        if img.interpretation not in ("srgb", "grey"):
+            img = img.colourspace("srgb")
+    except pyvips.Error:
+        # Fallback in odd color profiles
+        img = img.colourspace("srgb")
+
+    # Resize with height cap (no upscaling)
+    if img.height > target_max_height:
+        scale = target_max_height / float(img.height)
+        img = img.resize(scale)
+
+    # Save to WebP buffer
+    webp_bytes = img.webpsave_buffer(
+        Q=quality,       # ~75–80 is a good default
+        lossless=False,  # lossy typically best for covers
+        effort=6,        # higher = more CPU, smaller output (0–6)
+        strip=True       # drop metadata/icc to keep it small
+    )
+    return webp_bytes
+
+
+def get_image_save_path(token):
+    ext = ".webp"
+    filename = f"{token}{ext}"
+    cover_base_path = config.COVER_BASE_DIRECTORY
+    digest = hashlib.blake2b(token.encode('ascii'), digest_size=config.COVER_DIRECTORY_LEVELS).digest()
+    parts = tuple(str(b % config.COVER_DIRECTORIES_PER_LEVEL) for b in digest)
+    full_path = cover_base_path.joinpath(*parts, filename)
+    relative_path = full_path.relative_to(cover_base_path)
+    return relative_path
+
 
 def extract_metadata(epub_path):
 
@@ -52,8 +110,7 @@ def extract_metadata(epub_path):
         'authors' : book.author_list,
         'series' : book.series or '',
         'seriesindex' : book.series_index if book.series_index is not None else 0.0,
-        'cover_image_data' : book.cover_image_data,
-        'cover_media_type' : book.cover_media_type
+        'cover_image_data' : book.cover_image_data
     }
     return book_meta
 
@@ -81,6 +138,7 @@ def remove_missing_files(session, db_identifiers, filesystem_identifiers):
             for record in mapping_records:
                 session.delete(record)
             session.delete(result)
+            invalidate_redis_cache(result.identifier)
         if files_to_delete:
             logger.debug(
                 f"Removed {len(files_to_delete)} records from DB as the files are truly missing from filesystem.")
@@ -96,6 +154,7 @@ def remove_missing_user_progress(session):
 
 def add_new_db_entry(session, unique_id, metadata):
     fallback_identifier = unique_id.strip() or metadata['relative_path']
+    cover_image_path = metadata['cover_image_path'].as_posix() if metadata['cover_image_path'] is not None else None
     new_entry = EpubMetadata(
         identifier=fallback_identifier,
         title=metadata['title'],
@@ -103,8 +162,7 @@ def add_new_db_entry(session, unique_id, metadata):
         series=metadata['series'],
         seriesindex=metadata['seriesindex'],
         relative_path=metadata['relative_path'],
-        cover_image_data=metadata['cover_image_data'],
-        cover_media_type=metadata['cover_media_type']
+        cover_image_path=cover_image_path
     )
     session.add(new_entry)
     try:
@@ -116,9 +174,31 @@ def add_new_db_entry(session, unique_id, metadata):
         session.rollback()
         return False
 
-def scan_and_store_metadata(base_directory):
-    session = get_session()
 
+def save_cover_image(cover_image_data, cover_image_path):
+    path = config.COVER_BASE_DIRECTORY.joinpath(cover_image_path)
+    webp_bytes = make_cover_webp_vips(cover_image_data)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with NamedTemporaryFile("wb", delete=False, dir=path.parent) as tmp:
+        tmp.write(webp_bytes)
+        tmp.flush()
+        os.fsync(tmp.fileno())
+        tmp_name = tmp.name
+    try:
+        os.replace(tmp_name, path)
+    except Exception as e:
+        logger.error(f"Error writing cover image to '{path}': {e}")
+        try:
+            os.remove(tmp_name)
+        except OSError as e:
+            logger.error(f"Error during temporary file cleanup: {e}")
+            pass
+        raise
+
+
+def scan_and_store_metadata(base_directory, source="default"):
+    session = get_session()
     try:
         epubs = find_epubs(base_directory)
         logger.debug(f"Found {len(epubs)} ePubs in base directory: {base_directory}")
@@ -131,14 +211,19 @@ def scan_and_store_metadata(base_directory):
             logger.debug(f"Book Title: {metadata['title']}")
             filesystem_identifiers.add(unique_id)
             existing_record = session.query(EpubMetadata).filter_by(identifier=unique_id).first()
-
             if existing_record:
+                if source == "init":
+                    update_redis_cache(metadata)
                 if existing_record.relative_path != metadata['relative_path']:
                     existing_record.relative_path = metadata['relative_path']
                     session.add(existing_record)
+                    update_redis_cache(metadata)
                     logger.debug(f"Updated relative_path in DB for identifier={unique_id}, Path: {metadata['relative_path']}")
             else:
-                add_new_db_entry(session, unique_id, metadata)
+                if add_new_db_entry(session, unique_id, metadata):
+                    if metadata['cover_image_path'] is not None:
+                        save_cover_image(metadata['cover_image_data'], metadata['cover_image_path'])
+                        update_redis_cache(metadata)
         if config.ENVIRONMENT != "test":
             remove_missing_files(session, db_identifiers, filesystem_identifiers)
             remove_missing_user_progress(session)
