@@ -418,10 +418,10 @@ def add_book_entries(feed, book):
 
     # Add links for cover image and download
     cover_url = urljoin(request.url_root, f'api/covers/{book.identifier}')
-    add_link(entry, 'http://opds-spec.org/image', cover_url, book.cover_media_type)
+    add_link(entry, 'http://opds-spec.org/image', cover_url, "image/webp")
 
     thumbnail_url = urljoin(request.url_root, f'api/covers/{book.identifier}')
-    add_link(entry, 'http://opds-spec.org/image/thumbnail', thumbnail_url, book.cover_media_type)
+    add_link(entry, 'http://opds-spec.org/image/thumbnail', thumbnail_url, "image/webp")
 
     # Add download link
     download_url = urljoin(request.url_root, f'download/{book.identifier}')
