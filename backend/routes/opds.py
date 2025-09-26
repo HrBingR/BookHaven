@@ -47,10 +47,10 @@ def basic_auth():
         return response
 
     # Check Redis for an existing session
-    session_data = redis.get(f"user_session:{username}")
-    if session_data:
+    opds_session_data = redis.get(f"opds_user_session:{username}")
+    if opds_session_data:
         try:
-            user_id = int(session_data)
+            user_id = int(opds_session_data)
             session = get_session()
             try:
                 user = session.query(Users).filter(Users.id == user_id).first()
@@ -60,7 +60,7 @@ def basic_auth():
                 session.close()
         except ValueError:
             # Invalid session data in Redis
-            redis.delete(f"user_session:{username}")
+            redis.delete(f"opds_user_session:{username}")
 
     # If no session found in Redis, validate credentials against database
     session = get_session()
