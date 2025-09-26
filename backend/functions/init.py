@@ -16,15 +16,16 @@ class CustomFlask(Flask):
 
 
 def init_redis() -> Optional[redis.StrictRedis]:
-    if config.OPDS_ENABLED:
-        try:
-            redis_client = redis.StrictRedis.from_url(config.OPDS_REDIS_URI, decode_responses=True)
-            return redis_client
-        except redis.RedisError as e:
-            logger.exception(f"Could not connect to Redis: {e}")
-            raise
-    else:
-        return None
+    try:
+        if not config.redis_db_uri:
+            logger.error("Redis is not configured")
+            sys.exit(1)
+        redis_client = redis.StrictRedis.from_url(config.redis_db_uri, decode_responses=True)
+        redis_client.ping()
+        return redis_client
+    except redis.RedisError as e:
+        logger.exception(f"Could not connect to Redis: {e}")
+        sys.exit(1)
 
 
 def init_uploads(app):
