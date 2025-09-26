@@ -7,6 +7,7 @@ import re
 from flask import current_app, jsonify, request
 from config.config import config
 from config.logger import logger
+from pathlib import Path
 
 def check_required_envs(secret_key: str, base_url: str, oidc_enabled: bool) -> tuple[bool, str]:
     if not secret_key:
@@ -139,3 +140,35 @@ def unlink_oidc(user_id):
         return jsonify({"error": "Internal server error"}), 500
     finally:
         session.close()
+
+
+def update_redis_cache(data):
+    app = current_app
+    redis_client = getattr(app, "redis", None)
+    if not redis_client:
+        logger.debug("Redis client not configured, skipping cache update")
+        return
+    cover_image_path = data['cover_image_path'].as_posix() if isinstance(data['cover_image_path'], Path) else data['cover_image_path']
+    book_path = data['relative_path']
+    identifier = data['identifier']
+    try:
+        if cover_image_path:
+            redis_client.hset("image_path_cache", identifier, str(cover_image_path))
+        if book_path:
+            redis_client.hset("book_path_cache", identifier, str(book_path))
+    except Exception as e:
+        logger.warning(f"update_redis_cache: Redis write failed for {identifier}: {e}")
+
+def invalidate_redis_cache(identifier):
+    app = current_app
+    redis_client = getattr(app, "redis", None)
+    if not redis_client:
+        logger.debug("Redis client not configured, skipping cache update")
+        return
+    try:
+        redis_client.hdel("image_path_cache", identifier)
+        redis_client.hdel("book_path_cache", identifier)
+    except Exception as e:
+        logger.debug(f"Exception occured when trying to invalidate redis cache: {e}")
+        return
+
