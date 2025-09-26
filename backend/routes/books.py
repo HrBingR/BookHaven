@@ -108,11 +108,7 @@ def get_books(token_state):
                 "marked_favorite": book_progress_favorite,
             })
         return jsonify({
-            "books": book_list,
-            "total_books": total_books,
-            "fetched_offset": offset,
-            "next_offset": offset + limit,
-            "remaining_books": max(0, total_books - (offset + limit))
+            "books": book_list
         })
     except Exception as e:
         logger.exception(e)
