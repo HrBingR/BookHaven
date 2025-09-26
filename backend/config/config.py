@@ -1,7 +1,10 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
+
 
 load_dotenv()
+
 
 def str_to_bool(value):
     if isinstance(value, bool):
@@ -19,6 +22,7 @@ def str_to_bool(value):
             return False
     return False
 
+
 class Config:
     def __init__(self):
 
@@ -26,9 +30,12 @@ class Config:
 
         self.ENVIRONMENT = "production"
         self.BASE_DIRECTORY = os.getenv('BASE_DIRECTORY', '/ebooks')
+        self.BASE_URL = os.getenv('BASE_URL', "").strip()
         self.UPLOADS_DIRECTORY = os.getenv('UPLOADS_DIRECTORY', '/uploads')
         self.UPLOADS_ENABLED = str_to_bool(os.getenv('UPLOADS_ENABLED', False))
-        self.BASE_URL = os.getenv('BASE_URL', "").strip()
+        self.COVER_BASE_DIRECTORY = Path(os.getenv('COVER_BASE_DIRECTORY', '/cover_img'))
+        self.COVER_DIRECTORIES_PER_LEVEL = os.getenv('COVER_DIRECTORIES_PER_LEVEL', 10)
+        self.COVER_DIRECTORY_LEVELS = os.getenv('COVER_DIRECTORY_LEVELS', 2)
         self.SECRET_KEY = os.getenv('SECRET_KEY', "").strip()
         self.ADMIN_PASS = os.getenv('ADMIN_PASS')
         self.ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')
@@ -49,10 +56,8 @@ class Config:
         self.REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
         self.REDIS_PORT = os.getenv('REDIS_PORT', '6379')
         self.REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', "").strip()
-        self.REDIS_LIMITER_DB = os.getenv('REDIS_LIMITER_DB', 0)
-        self.REDIS_SCHEDULER_DB = os.getenv('REDIS_SCHEDULER_DB', 5)
+        self.REDIS_DB = os.getenv('REDIS_DB', 0)
         self.REDIS_LOCK_DB = os.getenv('REDIS_LOCK_DB', 6)
-        self.REDIS_OPDS_DB = os.getenv('REDIS_OPDS_DB', 8)
 
         self.RATE_LIMITER_ENABLED = str_to_bool(os.getenv('RATE_LIMITER_ENABLED', True))
         self.BACKEND_RATE_LIMIT = os.getenv('BACKEND_RATE_LIMIT', 300)
@@ -70,34 +75,10 @@ class Config:
         self.DB_PASSWORD = os.getenv('DB_PASSWORD', None)
 
     @property
-    def RATE_LIMITER_URI(self):
+    def redis_db_uri(self, rdb=0):
         if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LIMITER_DB}"
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LIMITER_DB}"
-
-    @property
-    def CELERY_BROKER_URL(self):
-        if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
-
-    @property
-    def CELERY_RESULT_BACKEND(self):
-        if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_SCHEDULER_DB}"
-
-    @property
-    def OPDS_REDIS_URI(self):
-        if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_OPDS_DB}"
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_OPDS_DB}"
-
-    @property
-    def REDIS_LOCK_DB_URI(self):
-        if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LOCK_DB}"
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_LOCK_DB}"
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{rdb}"
 
 
 config = Config()

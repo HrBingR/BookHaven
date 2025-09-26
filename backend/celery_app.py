@@ -6,8 +6,8 @@ from config.logger import logger
 def make_celery():
     celery = Celery(
         __name__,
-        broker=config.CELERY_BROKER_URL,
-        backend=config.CELERY_RESULT_BACKEND,
+        broker=config.redis_db_uri(1),
+        backend=config.redis_db_uri(1),
         include=['functions.tasks.scan']  # Include your task modules
     )
     scan_interval = config.PERIODIC_SCAN_INTERVAL
@@ -45,7 +45,7 @@ from celery.signals import worker_ready
 def at_worker_ready(sender, **kwargs):
     # Delay import to avoid circular import
     from functions.tasks.scan import scan_library_task
-    redis_lock_client = Redis.from_url(config.REDIS_LOCK_DB_URI)
+    redis_lock_client = Redis.from_url(config.redis_db_uri(1))
 
     hostname = socket.gethostname()
     logger.info(f"Celery worker_ready signal received on host: {hostname}")
