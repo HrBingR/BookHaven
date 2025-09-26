@@ -19,6 +19,7 @@ def find_epubs(base_directory):
                 epubs.append(full_path)
     return epubs
 
+
 def get_metadata(epub_path, base_directory):
     book_meta = extract_metadata(epub_path)
     relative_path = os.path.relpath(epub_path, base_directory)
@@ -87,11 +88,13 @@ def remove_missing_files(session, db_identifiers, filesystem_identifiers):
             logger.debug(
                 f"Skipped deletion of {uploaded_files_skipped} files that exist but weren't found in filesystem scan.")
 
+
 def remove_missing_user_progress(session):
     valid_users_subquery = select(Users.id)
     session.query(ProgressMapping).filter(~ProgressMapping.user_id.in_(valid_users_subquery)).delete(synchronize_session=False)
 
-def add_new_db_entry(session, unique_id, metadata,):
+
+def add_new_db_entry(session, unique_id, metadata):
     fallback_identifier = unique_id.strip() or metadata['relative_path']
     new_entry = EpubMetadata(
         identifier=fallback_identifier,
