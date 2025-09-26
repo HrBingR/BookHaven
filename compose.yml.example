@@ -31,6 +31,7 @@ services:
       - ${APP_PORT}:${APP_PORT}
     volumes:
       - /path/to/epub/directory:${BASE_DIRECTORY}
+      - /path/to/covers/directory:${COVER_BASE_DIRECTORY}
       # If uploads feature is enabled:
       - /path/to/uploads/directory:${UPLOADS_DIRECTORY}
     networks:
