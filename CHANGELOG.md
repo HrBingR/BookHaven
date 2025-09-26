@@ -48,3 +48,10 @@
   - Made migration script more resilient.
 - v.1.6.0
   - Added requests feature for users to request for new books to be added to the site.
+- v.1.7.0
+  - Updated scanning methodology to store new cover images to disk.
+  - Added migrations to remove all existing images from the DB - a shortsighted architectural decision made at project inception - and store them to disk.
+  - Added pyvips for rapid image conversion to webp, and image resize to h:300px, to improve performance when serving cover images.
+  - Implemented redis caching for media endpoints, reducing the need for slower DB queries for cover image and ebook path retrieval, while maintaining DB fallback.
+  - Fixed logic to actually disable OPDS when disabled in config, rather than simply not creating the required Redis instance.
+  - Collapsed and streamlined redis DB config & properties to simplify usage.

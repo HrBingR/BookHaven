@@ -149,45 +149,33 @@ Replace `tag:version` with your preferred image name and version (e.g., `bookhav
 
 ## Change log:
 
-For detailed changelog see [CHANGELOG](CHANGELOG.md)
+Note: The below is a highly summarized change-log for all but the latest versions.
 
-- v1.0.x
+For the detailed per-version changelog see [CHANGELOG](CHANGELOG.md)
+
+- v1.0.x - v1.3.5
   - Initial Release
-- v1.1.0 - v1.1.1
   - Added OIDC support
-  - Fixed a bug where OIDC front-end components would still render with OIDC disabled.
-- v1.2.0 - v1.2.2
   - Added support for optionally writing metadata to the ePub file, instead of just to the database.
-  - Fixed issue where Celery would detect PERIODIC_SCAN_INTERVAL, if explicitly defined, as a string and throw an exception.
-  - Fixed migration and DB model logic that would prevent Postgres users from successfully initializing the database.
-- v1.3.0 - v1.3.5
-  - Added rudimentary OPDS support.
-  - Improved OPDS functionality.
-  - Fixed UI issues on Authors page
-  - Fixed some UX issues related to scrolling on Home page
-  - Improved cover image loading on the front-end
-  - Upped default API rate limit and made it customizable
-  - Implemented locking for the scan process to ensure only one scan runs at a time
-  - Improved DB component of the scan logic
-  - Fixed rendering of expanded author lists on mobile on the "Authors" page
+  - Added OPDS support.
   - Updated scan logic - library will now be automatically scanned on start
-- v1.4.0 - v1.4.1
+  - Implemented locking for the scan process to ensure only one scan runs at a time
+  - Other minor improvements 
+  - Various bug fixes
+- v1.4.0 - v1.5.2
   - Added Upload functionality - check .env.example on how to enable and use
-  - Updated scanner fallback identifiers from relative paths to filenames
-  - Created migration to update existing fallback identifiers
-  - Swapped from gunicorn sync to gunicorn gthread for better upload performance
-  - Fixed celery task imports for scheduled scans
-  - Fixed hiding the upload button when uploads feature is disabled
-- v1.5.0 - v1.5.2
-  - Added role-based access (RBAC). Admins can now give users different roles as follows:
-    - User: Access to all basic features except for uploads, editing metadata, and manging users.
-    - Editor: Includes access to uploads and editing metadata.
-    - Admin: Includes access to managing other users.
-  - Improved logic when logging in via Cloudflare Access.
-  - Fixed minor bug affecting legacy columns that were never removed.
-  - Made migration script more resilient.
+  - Added basic role-based access (RBAC)
+  - Other minor improvements
+  - Various bug fixes
 - v.1.6.0
   - Added requests feature for users to request for new books to be added to the site.
+- v.1.7.0
+  - Updated scanning methodology to store new cover images to disk.
+  - Added migrations to remove all existing images from the DB - a shortsighted architectural decision made at project inception - and store them to disk.
+  - Added pyvips for rapid image conversion to webp, and image resize to h:300px, to improve performance when serving cover images.
+  - Implemented redis caching for media endpoints, reducing the need for slower DB queries for cover image and ebook path retrieval, while maintaining DB fallback.
+  - Fixed logic to actually disable OPDS when disabled in config, rather than simply not creating the required Redis instance.
+  - Collapsed and streamlined redis DB config & properties to simplify usage.
 
 ## TODO:
 
