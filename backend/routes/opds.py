@@ -76,7 +76,7 @@ def basic_auth():
 
         # Create and store session in Redis with both username and session token
         session_token = str(uuid.uuid4())
-        redis_key = f"user_session:{username}:{session_token}"
+        redis_key = f"opds_user_session:{username}:{session_token}"
         redis.set(redis_key, user.id, ex=app.config.get('SESSION_LIFETIME', 86400))
 
         # Update last_login timestamp
