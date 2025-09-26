@@ -53,7 +53,7 @@ def at_worker_ready(sender, **kwargs):
     lock = redis_lock_client.lock("startup_scan_lock", timeout=300)
     if lock.acquire(blocking=False):
         logger.info("Running initial scan on startup.")
-        scan_library_task.delay()
+        scan_library_task("init").delay()
         lock.release()
     else:
         logger.info("Startup scan already triggered elsewhere.")
