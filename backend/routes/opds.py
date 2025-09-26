@@ -15,8 +15,14 @@ from urllib.parse import urljoin, quote
 from sqlalchemy.exc import SQLAlchemyError
 from redis.exceptions import RedisError
 from sqlalchemy import and_, or_, func
+from config.config import config
 
 def basic_auth():
+    if not config.OPDS_ENABLED:
+        logger.warning("OPDS not enabled!")
+        response = make_response('OPDS Feature Not Enabled', 501)
+        response.headers['WWW-Authenticate'] = 'Basic realm="OPDS Catalog"'
+        return response
     app = cast(CustomFlask, current_app)
     redis = app.redis
     if not redis:
