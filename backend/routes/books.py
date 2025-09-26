@@ -8,12 +8,14 @@ from models.requests import Requests
 from functions.db import get_session
 from functions.book_management import update_book_progress_state, get_book_progress_record
 from functions.roles import login_required
+from functions.utils import update_redis_cache
 from config.config import config, str_to_bool
 from config.logger import logger
 import ebookmeta
 import os
 import base64
-from functions.metadata.scan import get_metadata, add_new_db_entry
+import secrets
+from functions.metadata.scan import get_metadata, add_new_db_entry, get_image_save_path, save_cover_image
 from urllib.parse import unquote
 
 books_bp = Blueprint('books', __name__)
@@ -185,7 +187,6 @@ def upload_file(token_state):
             'seriesindex': book_metadata['seriesindex'],
             'relative_path': book_metadata['relative_path'],
             'coverImageData': cover_image_base64,
-            'coverMediaType': book_metadata['cover_media_type'] if has_cover else None,
             'hasCover': has_cover
         }]
         return jsonify({
@@ -245,11 +246,15 @@ def add_book(token_state):
         if new_seriesindex is None:
             metadata['seriesindex'] = float(0.0)
         if new_cover:
+            cover_token = secrets.token_urlsafe(12)[:16]
+            metadata['cover_image_path'] = get_image_save_path(cover_token)
             metadata['cover_image_data'] = new_cover.read()
-            metadata['cover_media_type'] = new_cover.mimetype
         success = add_new_db_entry(session, identifier, metadata)
         if success:
             session.commit()
+            if metadata['cover_image_path'] is not None:
+                save_cover_image(metadata['cover_image_data'], metadata['cover_image_path'])
+                update_redis_cache(metadata)
             return jsonify({'message': 'Book added successfully'}), 200
         else:
             return jsonify({'error': 'Failed to add book, duplicate entry'}), 409
@@ -299,8 +304,8 @@ def edit_book_metadata(token_state):
                 if not book.cover_image_data or len(book.cover_image_data) <= 10:
                     return jsonify({"error": "BookHaven can only replace existing cover images, but at this time can not add new ones."}), 400
                 else:
-                    book.cover_image_data = new_cover.read()
-                    book.cover_media_type = new_cover.mimetype
+                    new_cover_bytes = new_cover.read()
+                    book.cover_image_data = new_cover_bytes
             ebookmeta.set_metadata(book_file, book)
         if new_title:
             book_record.title = new_title
@@ -316,8 +321,30 @@ def edit_book_metadata(token_state):
         if new_seriesindex is None:
             book_record.seriesindex = float(0.0)
         if new_cover:
-            book_record.cover_image_data = new_cover.read()
-            book_record.cover_media_type = new_cover.mimetype
+            try:
+                new_cover_bytes  # type: ignore[name-defined]
+            except NameError:
+                new_cover_bytes = new_cover.read()
+            # Optional: remove old cover file to avoid orphans
+            old_rel = book_record.cover_image_path
+            if old_rel:
+                try:
+                    old_abs = os.path.join(config.COVER_BASE_DIRECTORY, old_rel)
+                    if os.path.exists(old_abs):
+                        os.remove(old_abs)
+                except Exception:
+                    logger.warning(f"Failed to remove old cover file at {old_rel}")
+            # Generate new path and save
+            cover_token = secrets.token_urlsafe(12)[:16]
+            new_rel_path = get_image_save_path(cover_token)
+            save_cover_image(new_cover_bytes, new_rel_path)
+            meta = {
+                'identifier': book_record.identifier,
+                'cover_image_path': new_rel_path,
+                'relative_path': book_record.relative_path
+            }
+            update_redis_cache(meta)
+            book_record.cover_image_path = new_rel_path.as_posix()
         session.commit()
         return jsonify({"message": "Book metadata updated successfully"}), 200
     except Exception as e:
@@ -336,17 +363,14 @@ def get_book_details_by_identifier(book_identifier, token_state):
         if not book_record:
             return jsonify({"error": f"No book found with identifier {book_identifier}"}), 404
         if token_state != "no_token":
-            book_progress_status, book_progress = get_book_progress(token_state, book_identifier, session)
-            if not book_progress_status:
-                book_progress_progress = None
-            else:
-                book_progress_progress = book_progress.progress
+            book_progress_record = get_book_progress_record(token_state, book_identifier, session)
+            book_progress = book_progress_record.progress if book_progress_record is not None else None
         else:
-            book_progress_progress = None
+            book_progress = None
         book_details = {
             "identifier": book_record.identifier,
             "epubUrl": config.BASE_URL.rstrip("/") + url_for("media.stream", book_identifier=book_record.identifier),
-            "progress": book_progress_progress,
+            "progress": book_progress,
         }
         return jsonify(book_details), 200
     finally:
