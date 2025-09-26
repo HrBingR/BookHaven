@@ -6,7 +6,7 @@ from models.progress_mapping import ProgressMapping
 from models.users import Users
 from models.requests import Requests
 from functions.db import get_session
-from functions.book_management import get_book_progress, update_book_progress_state
+from functions.book_management import update_book_progress_state, get_book_progress_record
 from functions.roles import login_required
 from config.config import config, str_to_bool
 from config.logger import logger
@@ -34,6 +34,11 @@ def get_books(token_state):
     favorites_queried = str_to_bool(request.args.get('favorites', False))
     finished_queried = str_to_bool(request.args.get('finished', False))
     unfinished_queried = str_to_bool(request.args.get('unfinished', False))
+    filter_flags = {
+        "favorites": favorites_queried,
+        "finished": finished_queried,
+        "unfinished": unfinished_queried
+    }
     session = get_session()
     try:
         books_query = session.query(EpubMetadata)
@@ -41,45 +46,27 @@ def get_books(token_state):
             if token_state == "no_token":
                 return jsonify({"error": "Unauthenticated access is not allowed"}), 401
             user_id = token_state["user_id"]
-            books_query_favorite = (
-                books_query.join(ProgressMapping, ProgressMapping.book_id == EpubMetadata.id)
-                .filter(
-                    ProgressMapping.user_id == user_id,
-                    ProgressMapping.marked_favorite.is_(True)
-                )
-            )
-            books_query_finished = (
-                books_query.join(ProgressMapping, ProgressMapping.book_id == EpubMetadata.id)
-                .filter(
-                    ProgressMapping.user_id == user_id,
-                    ProgressMapping.is_finished.is_(True)
-                )
-            )
-            books_query_unfinished = (
-                books_query
-                .outerjoin(
-                    ProgressMapping,
-                    and_(ProgressMapping.book_id == EpubMetadata.id, ProgressMapping.user_id == user_id)
-                )
-                .filter(
-                    or_(
-                        ProgressMapping.is_finished.is_(False),
-                        ProgressMapping.id.is_(None)
-                    )
-                )
-            )
-            if favorites_queried is True and finished_queried is True:
-                books_query = books_query_favorite.union(books_query_finished)
-            elif favorites_queried is True and unfinished_queried is True:
-                books_query = books_query_favorite.union(books_query_unfinished)
-            elif favorites_queried is True:
-                books_query = books_query_favorite
-            elif finished_queried is True:
-                books_query = books_query_finished
-            elif unfinished_queried is True:
-                books_query = books_query_unfinished
-            if books_query.count() == 0:
-                return jsonify({"message": "No books matching the specified query were found."}), 200
+            def _books_query_filters(q, user_id, flags):
+                onclause = (ProgressMapping.book_id == EpubMetadata.id) & (ProgressMapping.user_id == user_id)
+                conditions = []
+                if flags.get("favorites"):
+                    conditions.append(ProgressMapping.marked_favorite.is_(True))
+                if flags.get("finished"):
+                    conditions.append(ProgressMapping.is_finished.is_(True))
+                if flags.get("unfinished"):
+                    if not conditions:
+                        return (
+                            q.outerjoin(ProgressMapping, onclause)
+                             .filter(
+                                 or_(
+                                     ProgressMapping.is_finished.is_(False),
+                                     ProgressMapping.id.is_(None),
+                                 )
+                             )
+                        )
+                    conditions.append(ProgressMapping.is_finished.is_(False))
+                return q.join(ProgressMapping, onclause).filter(*conditions)
+            books_query = _books_query_filters(books_query, user_id, filter_flags)
         if query:
             query_like = f"%{query}%"
             books_query = books_query.filter(
@@ -93,17 +80,21 @@ def get_books(token_state):
             EpubMetadata.seriesindex,
             EpubMetadata.title
         )
-        total_books = books_query.count()
+        if books_query.limit(1).first() is None:
+            return jsonify({"message": "No books matching the specified query were found."}), 200
         books = books_query.offset(offset).limit(limit).all()
         book_list = []
         for book in books:
-            book_progress_finished = False
-            book_progress_favorite = False
+            book_progress_finished = False if finished_queried is False else True
+            book_progress_favorite = False if favorites_queried is False else True
             if token_state != "no_token":
-                book_progress_status, book_progress = get_book_progress(token_state, book.identifier, session)
-                if book_progress_status:
-                    book_progress_finished = book_progress.is_finished
-                    book_progress_favorite = book_progress.marked_favorite
+                book_progress = None
+                if not book_progress_finished or not book_progress_favorite:
+                    book_progress = get_book_progress_record(token_state, book.identifier, session)
+                if not book_progress_favorite:
+                    book_progress_favorite = book_progress.marked_favorite if book_progress is not None else False
+                if not book_progress_finished:
+                    book_progress_finished = book_progress.is_finished if book_progress is not None else False
             book_list.append({
                 "id": book.id,
                 "title": book.title,
