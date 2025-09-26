@@ -6,18 +6,18 @@ from config.logger import logger
 from sqlalchemy.exc import SQLAlchemyError
 from functions.metadata.scan import scan_and_store_metadata
 
-logger.info(f"REDIS LOCK URI: {config.REDIS_LOCK_DB_URI}")
-redis_lock_client = Redis.from_url(config.REDIS_LOCK_DB_URI)
+logger.info(f"REDIS LOCK URI: {config.redis_db_uri(2)}")
+redis_lock_client = Redis.from_url(config.redis_db_uri(2))
 
 @celery.task(bind=True, name="functions.tasks.scan.scan_library_task", max_retries=5)
-def scan_library_task(self):
+def scan_library_task(self, source="default"):
     lock = redis_lock_client.lock("scan_lock", timeout=900)  # e.g., 15-minute hard max timeout
     if not lock.acquire(blocking=False):
         logger.warning("Another scan is already running. Skipping this one.")
         return "scan_already_running"
     try:
         logger.info("Starting scan with lock acquired.")
-        scan_and_store_metadata(config.BASE_DIRECTORY)
+        scan_and_store_metadata(config.BASE_DIRECTORY, source)
         return "scan_completed"
     except SQLAlchemyError as exc:
         if self.request.retries >= self.max_retries:
