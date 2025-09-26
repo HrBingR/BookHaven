@@ -1,4 +1,4 @@
-from sqlalchemy import or_, and_
+from sqlalchemy import or_
 from flask import Blueprint, request, jsonify, url_for, current_app
 from sqlalchemy.exc import IntegrityError
 from models.epub_metadata import EpubMetadata
