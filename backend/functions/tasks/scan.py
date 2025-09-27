@@ -7,7 +7,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from functions.metadata.scan import scan_and_store_metadata
 
 logger.info(f"REDIS LOCK URI: {config.redis_db_uri(2)}")
-redis_lock_client = Redis.from_url(config.redis_db_uri(2))
+url = config.redis_db_uri(2)
+redis_lock_client = Redis.from_url(url)
 
 @celery.task(bind=True, name="functions.tasks.scan.scan_library_task", max_retries=5)
 def scan_library_task(self, source="default"):

@@ -4,10 +4,11 @@ from functions.db import get_session
 from email_validator import validate_email, EmailNotValidError
 import bcrypt
 import re
-from flask import current_app, jsonify, request
+from flask import current_app, jsonify, request, has_app_context
 from config.config import config
 from config.logger import logger
 from pathlib import Path
+from redis import Redis
 
 def check_required_envs(secret_key: str, base_url: str, oidc_enabled: bool) -> tuple[bool, str]:
     if not secret_key:
@@ -142,11 +143,26 @@ def unlink_oidc(user_id):
         session.close()
 
 
+def _get_redis_client():
+    # Prefer the Flask app's Redis client if we have an app context
+    if has_app_context():
+        app = current_app
+        redis_client = getattr(app, "redis", None)
+        if redis_client:
+            return redis_client
+    # Fallback for non-Flask contexts (e.g., Celery workers)
+    try:
+        url = config.redis_db_uri(2)
+        return Redis.from_url(url, decode_responses=True)
+    except Exception as e:
+        logger.debug(f"_get_redis_client: Could not create Redis client: {e}")
+        return None
+
+
 def update_redis_cache(data):
-    app = current_app
-    redis_client = getattr(app, "redis", None)
+    redis_client = _get_redis_client()
     if not redis_client:
-        logger.debug("Redis client not configured, skipping cache update")
+        logger.debug("Redis client not available, skipping cache update")
         return
     cover_image_path = data['cover_image_path'].as_posix() if isinstance(data['cover_image_path'], Path) else data['cover_image_path']
     book_path = data['relative_path']
@@ -159,16 +175,15 @@ def update_redis_cache(data):
     except Exception as e:
         logger.warning(f"update_redis_cache: Redis write failed for {identifier}: {e}")
 
+
 def invalidate_redis_cache(identifier):
-    app = current_app
-    redis_client = getattr(app, "redis", None)
+    redis_client = _get_redis_client()
     if not redis_client:
-        logger.debug("Redis client not configured, skipping cache update")
+        logger.debug("Redis client not available, skipping cache invalidation")
         return
     try:
         redis_client.hdel("image_path_cache", identifier)
         redis_client.hdel("book_path_cache", identifier)
     except Exception as e:
-        logger.debug(f"Exception occured when trying to invalidate redis cache: {e}")
+        logger.debug(f"Exception occurred when trying to invalidate redis cache: {e}")
         return
-

@@ -17,10 +17,11 @@ class CustomFlask(Flask):
 
 def init_redis() -> Optional[redis.StrictRedis]:
     try:
-        if not config.redis_db_uri:
+        url = config.redis_db_uri()
+        if not url:
             logger.error("Redis is not configured")
             sys.exit(1)
-        redis_client = redis.StrictRedis.from_url(config.redis_db_uri, decode_responses=True)
+        redis_client = redis.StrictRedis.from_url(url, decode_responses=True)
         redis_client.ping()
         return redis_client
     except redis.RedisError as e:

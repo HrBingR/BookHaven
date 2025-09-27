@@ -45,7 +45,8 @@ from celery.signals import worker_ready
 def at_worker_ready(sender, **kwargs):
     # Delay import to avoid circular import
     from functions.tasks.scan import scan_library_task
-    redis_lock_client = Redis.from_url(config.redis_db_uri(1))
+    url = config.redis_db_uri(1)
+    redis_lock_client = Redis.from_url(url)
 
     hostname = socket.gethostname()
     logger.info(f"Celery worker_ready signal received on host: {hostname}")
@@ -53,7 +54,7 @@ def at_worker_ready(sender, **kwargs):
     lock = redis_lock_client.lock("startup_scan_lock", timeout=300)
     if lock.acquire(blocking=False):
         logger.info("Running initial scan on startup.")
-        scan_library_task("init").delay()
+        scan_library_task.delay("init")
         lock.release()
     else:
         logger.info("Startup scan already triggered elsewhere.")

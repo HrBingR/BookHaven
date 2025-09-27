@@ -74,10 +74,11 @@ class Config:
         self.DB_USER = os.getenv('DB_USER', 'root')
         self.DB_PASSWORD = os.getenv('DB_PASSWORD', None)
 
-    @property
-    def redis_db_uri(self, rdb=0):
+    def redis_db_uri(self, rdb=None):
+        if rdb is None:
+            rdb = self.REDIS_DB
         if not self.REDIS_PASSWORD:
-            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+            return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{rdb}"
         return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{rdb}"
 
 

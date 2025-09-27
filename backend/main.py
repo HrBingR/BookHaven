@@ -10,7 +10,8 @@ def create_app() -> CustomFlask:
     init_env()
     init_encryption(app)
     init_rate_limit(app)
-    app.config["RATELIMIT_STORAGE_URI"] = config.redis_db_uri(3)
+    url = config.redis_db_uri(3)
+    app.config["RATELIMIT_STORAGE_URI"] = url
     setup_cors(app)
     setup_limiter(app)
     register_blueprints(app)
