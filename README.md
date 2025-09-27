@@ -208,6 +208,8 @@ For the detailed per-version changelog see [CHANGELOG](CHANGELOG.md)
   - Implemented redis caching for media endpoints, reducing the need for slower DB queries for cover image and ebook path retrieval, while maintaining DB fallback.
   - Fixed logic to actually disable OPDS when disabled in config, rather than simply not creating the required Redis instance.
   - Collapsed and streamlined redis DB config & properties to simplify usage.
+- v.1.7.1
+  - Fixed some logic issues surrounding Redis
 
 ## TODO:
 
