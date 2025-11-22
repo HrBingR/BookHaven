@@ -188,6 +188,8 @@ For detailed changelog [check Github](https://github.com/HrBingR/BookHaven/blob/
   - Collapsed and streamlined redis DB config & properties to simplify usage.
 - v.1.7.1
   - Fixed some logic issues surrounding Redis
+- v.1.7.2
+  - Fixed a minor bug involving data type mismatches.
 
 ## TODO:
 
