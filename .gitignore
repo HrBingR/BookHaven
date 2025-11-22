@@ -1,4 +1,5 @@
 compose.yml
 .env
-project_roadmap.md
+plan.md
 dbuild.sh
+.idea/
