@@ -109,7 +109,7 @@ def extract_metadata(epub_path):
         'title' : book.title,
         'authors' : book.author_list,
         'series' : book.series or '',
-        'seriesindex' : book.series_index if book.series_index is not None else 0.0,
+        'seriesindex' : float(book.series_index) if book.series_index is not None else 0.0,
         'cover_image_data' : book.cover_image_data
     }
     return book_meta
