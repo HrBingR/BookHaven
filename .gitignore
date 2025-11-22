@@ -3,3 +3,11 @@ compose.yml
 plan.md
 dbuild.sh
 .idea/
+node_modules/
+cc.epub
+/package.json
+/package-lock.json
+backend/venv
+backend/.coverage
+backend/last_scan_time.json
+backend/scan_lock.lock
