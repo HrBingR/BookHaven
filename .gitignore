@@ -1,13 +1,22 @@
-compose.yml
+# Root
 .env
+compose.yml
 plan.md
-dbuild.sh
-.idea/
-node_modules/
-cc.epub
 /package.json
 /package-lock.json
-backend/venv
+**/.idea/
+**/node_modules/
+**/.DS_Store
+**/__pycache__
+
+# Backend
 backend/.coverage
-backend/last_scan_time.json
-backend/scan_lock.lock
+backend/.env
+backend/apply_config.sh
+backend/tests/test.db
+backend/tests/cov.html/
+backend/.venv
+backend/breaking_changes.md
+
+# Frontend
+frontend/dist
