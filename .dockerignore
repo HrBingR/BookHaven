@@ -1,4 +1,4 @@
-backend/venv
+backend/.venv
 backend/.env
 backend/apply_env.sh
 **/__pycache__
