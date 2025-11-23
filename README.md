@@ -1,4 +1,3 @@
-
 <div align="right">
   <details>
     <summary >🌐 Language</summary>
@@ -186,19 +185,19 @@ Note: The below is a highly summarized change-log for all but the latest version
 For the detailed per-version changelog see [CHANGELOG](CHANGELOG.md)
 
 - v1.0.x - v1.3.5
-  - Initial Release
-  - Added OIDC support
+  - Initial Release.
+  - Added OIDC support.
   - Added support for optionally writing metadata to the ePub file, instead of just to the database.
   - Added OPDS support.
-  - Updated scan logic - library will now be automatically scanned on start
-  - Implemented locking for the scan process to ensure only one scan runs at a time
-  - Other minor improvements 
-  - Various bug fixes
+  - Updated scan logic - library will now be automatically scanned on start.
+  - Implemented locking for the scan process to ensure only one scan runs at a time.
+  - Other minor improvements.
+  - Various bug fixes.
 - v1.4.0 - v1.5.2
-  - Added Upload functionality - check .env.example on how to enable and use
-  - Added basic role-based access (RBAC)
-  - Other minor improvements
-  - Various bug fixes
+  - Added Upload functionality - check .env.example on how to enable and use.
+  - Added basic role-based access (RBAC).
+  - Other minor improvements.
+  - Various bug fixes.
 - v.1.6.0
   - Added requests feature for users to request for new books to be added to the site.
 - v.1.7.0
@@ -209,9 +208,13 @@ For the detailed per-version changelog see [CHANGELOG](CHANGELOG.md)
   - Fixed logic to actually disable OPDS when disabled in config, rather than simply not creating the required Redis instance.
   - Collapsed and streamlined redis DB config & properties to simplify usage.
 - v.1.7.1
-  - Fixed some logic issues surrounding Redis
+  - Fixed some logic issues surrounding Redis.
 - v.1.7.2
   - Fixed a minor bug involving data type mismatches.
+- v.1.7.3
+  - Updated Python and Node dependencies.
+  - Migrated from Python venv to uv.
+  - Migrated from gunicorn to uvicorn.
 
 ## TODO:
 
